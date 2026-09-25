@@ -4,6 +4,7 @@ import { parseArgs, print } from "./lib/args.js";
 import { InvalidArgument } from "./lib/validate.js";
 import { Refused } from "./lib/confirm.js";
 import { runConfig } from "./commands/config.js";
+import { runLogin } from "./commands/login.js";
 import { runToken } from "./commands/token.js";
 import { runMarket } from "./commands/market.js";
 import { runWallet } from "./commands/wallet.js";
@@ -13,7 +14,8 @@ import { runRewards } from "./commands/rewards.js";
 
 const USAGE = `moonrush-cli <command> [options]
 
-  config                 Show or set the API token
+  login                  Sign in through a browser. Start here.
+  config                 Show credentials, or set them by hand
   token <sub>            Token detail, search, and the Verified roster
   market <sub>           Discovery boards and the live fee config
   wallet <sub>           Balances, portfolio, deposits, chart, activity
@@ -25,8 +27,9 @@ Run a command with --help for its sub-commands.
 Every command prints JSON on stdout and takes --raw for one line. Errors go to
 stderr and exit 1.
 
-No token yet? These three work without one, so you can check the CLI reaches the
-API before setting anything up:
+Not signed in? Run: moonrush-cli login
+
+These three work with no token at all, so you can check the CLI reaches the API:
   moonrush-cli market config
   moonrush-cli token verified
   moonrush-cli token check --address <addr>`;
@@ -42,6 +45,8 @@ async function main(): Promise<number> {
   }
 
   switch (command) {
+    case "login":
+      return runLogin(flags);
     case "config":
       return runConfig(flags);
     case "token":
