@@ -100,8 +100,8 @@ export async function runConfig(
       `  token    ${cfg.token ? `set (${cfg.token.slice(0, 12)}…)` : "NOT SET"}\n` +
       `  renews   ${
         cfg.refreshToken && cfg.privyAppId && cfg.privyClientId
-          ? "yes — refresh token stored"
-          : "NO — expires in about an hour"
+          ? "yes, refresh token stored"
+          : "NO, expires in about an hour"
       }\n`,
   );
   return 0;

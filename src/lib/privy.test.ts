@@ -129,7 +129,7 @@ describe("the request", () => {
     }) as unknown as typeof fetch;
 
     return call().then(() => {
-      // Each of these is required and each is a PUBLIC value — they ship in the web
+      // Each of these is required and each is a PUBLIC value: they ship in the web
       // bundle. Missing one is refused, which is the failure that reads as "refresh is
       // not possible from a terminal".
       expect(seen!.headers.get("privy-app-id")).toBe("app");

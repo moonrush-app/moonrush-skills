@@ -18,7 +18,7 @@ export interface PrivySession {
    * is over.
    *
    * ⚠️ `ignore` IS NOT A NO-OP AND NOT A SUGGESTION. On it the response carries no new
-   * refresh token, and writing whatever it did carry — usually nothing — over the stored one
+   * refresh token, and writing whatever it did carry (usually nothing) over the stored one
    * destroys the only credential that can produce the next access token. The session would
    * then end at the next expiry with no way back, which looks exactly like "refresh does not
    * work", which is the wrong conclusion to reach about it.
@@ -42,7 +42,7 @@ export class PrivyAuthExpired extends Error {
  * Exchange a refresh token for a fresh access token.
  *
  * Every header below is required and none is a secret: the app id and client id ship in the
- * browser bundle, and `origin` has to be one Privy recognises for this app — which is why it
+ * browser bundle, and `origin` has to be one Privy recognises for this app, which is why it
  * is a configured value rather than something invented here.
  */
 export async function refreshPrivySession(

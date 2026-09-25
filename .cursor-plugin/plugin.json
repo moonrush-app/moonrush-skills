@@ -1,0 +1,21 @@
+{
+  "name": "moonrush-cli",
+  "description": "Moonrush skills: token lookup and the Verified roster, discovery boards across Solana / Robinhood / Base / BNB / Soneium / Arc, wallets and portfolios, trades and leaderboards, and creator rewards",
+  "version": "0.2.0",
+  "author": { "name": "Moonrush" },
+  "homepage": "https://moonrush.space",
+  "repository": "https://github.com/moonrush/moonrush-skills",
+  "license": "MIT",
+  "keywords": [
+    "moonrush",
+    "crypto",
+    "solana",
+    "soneium",
+    "base",
+    "token",
+    "defi",
+    "portfolio",
+    "market"
+  ],
+  "skills": ["./skills/"]
+}

@@ -1,10 +1,11 @@
 import { api } from "../lib/api.js";
 import { print } from "../index.js";
 import { sanitizeRows } from "../lib/sanitize.js";
+import { parseNetworkIdList } from "../lib/validate.js";
 
 const USAGE = `moonrush-cli market <sub> [options]
 
-  board      [--networkId <id|csv>]   Trending, Movers, New and Verified in one call
+  board      [--networkId <id|csv>]   Verified, Trending, Movers and New in one call
   config                              Live fee and limit config (no token needed)
 
 networkId accepts a comma-separated list to span chains in one board.
@@ -16,24 +17,29 @@ export async function runMarket(
 ): Promise<number> {
   if (!sub || flags.help) {
     process.stdout.write(USAGE + "\n");
-    return sub ? 0 : 1;
+    // `--help` was answered, so it succeeded. A bare command with no sub-command did not:
+    // nothing was asked and nothing was returned, and a script must be able to tell those
+    // apart by exit code alone.
+    return flags.help ? 0 : 1;
   }
 
   switch (sub) {
     case "board": {
-      const q =
-        typeof flags.networkId === "string"
-          ? `?networkId=${encodeURIComponent(flags.networkId)}`
-          : "";
+      const list = parseNetworkIdList(flags.networkId);
       // ONE call for every tab. The board is assembled server-side and edge-cached for 30
       // seconds, so asking per tab would be four requests for one answer that was built
       // together and must stay consistent with itself.
+      //
+      // READ `category.name`, NOT THE KEY. The fourth slot is keyed `graduated` on every
+      // chain but means two different things: a real launchpad graduation on Solana, and
+      // an age-based "New" feed everywhere else. The server says which in `name`.
+      const board = await api<
+        Record<string, { name?: string; tokens?: unknown[] }>
+      >(`/proxy/trendingTokensV2${list ? `?networkId=${list}` : ""}`, {
+        method: "POST",
+      });
       // EVERY tab, because every one of them carries attacker-written metadata and a board
       // is the widest surface the CLI has: one hostile token anywhere in a hundred rows.
-      const board = await api<Record<string, { tokens?: unknown[] }>>(
-        `/proxy/trendingTokensV2${q}`,
-        { method: "POST" },
-      );
       for (const slot of Object.values(board ?? {})) {
         if (slot && Array.isArray(slot.tokens)) {
           slot.tokens = sanitizeRows(slot.tokens);

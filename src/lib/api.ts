@@ -5,7 +5,7 @@ import { PrivyAuthExpired, refreshPrivySession } from "./privy.js";
  * One HTTP client for an API that answers in TWO envelopes.
  *
  * Most routes answer `{ ok, data }`. The `/proxy/*` routes answer
- * `{ success, responseObject }` — a different shape for the same idea, and a client that
+ * `{ success, responseObject }`: a different shape for the same idea, and a client that
  * knows only one silently reads `undefined` off the other. Both are unwrapped here so no
  * command has to care which it called.
  *
@@ -58,7 +58,7 @@ async function tryRefresh(): Promise<string | null> {
   saveConfig({
     MOONRUSH_TOKEN: session.accessToken,
     // ONLY when Privy sent a new one. On `ignore` it did not, and `saveConfig` skips
-    // undefined rather than clearing the field — which is the whole reason it merges.
+    // undefined rather than clearing the field, which is the whole reason it merges.
     MOONRUSH_REFRESH_TOKEN: session.refreshToken ?? undefined,
   });
   return session.accessToken;

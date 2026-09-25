@@ -14,7 +14,7 @@ export const CONFIG_FILE = join(CONFIG_DIR, ".env");
 
 export interface Config {
   /**
-   * A Privy access token. Short-lived — about an hour.
+   * A Privy access token. Short-lived: about an hour.
    *
    * On its own it is a one-hour CLI. With [refreshToken] beside it the client renews it
    * automatically and the session lasts as long as Privy keeps it alive.
@@ -30,7 +30,7 @@ export interface Config {
    */
   refreshToken?: string;
 
-  /** Privy app and client ids. Public values — they ship in the web bundle. */
+  /** Privy app and client ids. Public values; they ship in the web bundle. */
   privyAppId?: string;
   privyClientId?: string;
 

@@ -1,58 +1,96 @@
 # moonrush-skills
 
-Moonrush's API as a CLI, plus the skills that teach an agent to use it.
+The Moonrush API as a CLI, plus the skills that let an agent use it.
 
 ## Install
 
-```
+```bash
 npm install -g moonrush-cli
 moonrush-cli config
 ```
 
 As an agent plugin:
 
+```bash
+npx skills add moonrush-app/moonrush-skills
 ```
-npx skills add moonrush/moonrush-skills
+
+Codex: [.codex/INSTALL.md](./.codex/INSTALL.md). OpenCode: [.opencode/INSTALL.md](./.opencode/INSTALL.md).
+
+## Skills
+
+| Skill | Covers |
+|---|---|
+| `moonrush-token` | Token detail, search by name, the Verified roster |
+| `moonrush-market` | Trending / Movers / New boards, live fee config |
+| `moonrush-wallet` | Balances, portfolio, deposits, value over time, activity |
+| `moonrush-positions` | Trades: own, public, top, and who holds a token |
+| `moonrush-leaderboard` | PnL rankings over 24h / 7d / 30d / all time |
+| `moonrush-rewards` | Creator earnings, and claiming them |
+
+## Commands
+
+```bash
+moonrush-cli token info --address <addr> [--networkId <id>]
+moonrush-cli token search --q pengu
+moonrush-cli token verified --networkId 1868
+moonrush-cli market board --networkId 1399811149,8453
+moonrush-cli market config
+moonrush-cli wallet portfolio --sortBy pnlUsd
+moonrush-cli wallet balances
+moonrush-cli positions me --status OPEN
+moonrush-cli positions stats --tokenAddress <addr>
+moonrush-cli leaderboard pnl24h
+moonrush-cli rewards me
+moonrush-cli rewards claim          # moves money
 ```
+
+Chains: `1399811149` Solana (default), `4663` Robinhood, `8453` Base, `56` BNB,
+`1868` Soneium, `5042` Arc.
+
+Every command prints JSON on stdout and takes `--raw` for one line. Full reference:
+[docs/cli-usage.md](./docs/cli-usage.md).
 
 ## Auth
 
-Moonrush authenticates with **Privy**. The CLI keeps a **session**, not just a token: given
-a refresh token it calls `POST auth.privy.io/api/v1/sessions` itself and mints a new access
-token whenever one expires.
+Moonrush uses Privy. There is no API key: copy the tokens once from a signed-in browser,
+and the CLI renews the session itself from then on.
 
-So it keeps working for as long as the Privy session lives, rather than for the hour an
-access token lasts.
-
-```
+```bash
 moonrush-cli config --apply <ACCESS_TOKEN> \
   --refresh <REFRESH_TOKEN> --app-id <APP_ID> --client-id <CLIENT_ID>
 ```
 
-`moonrush-cli config` prints where to find each of those. Stored at
-`~/.config/moonrush/.env`, mode 600 — the refresh token is the long-lived credential, so
-treat that file as a secret. Environment variables override the file.
+`moonrush-cli config` prints where to find each value. Stored at `~/.config/moonrush/.env`,
+mode 600. Environment variables override the file.
 
-An access token on its own also works and gives about an hour.
+An access token alone works for about an hour. The refresh token is what removes that, and
+it is the credential worth protecting.
 
-⚠️ **`session_update_action: "ignore"` means keep the refresh token you have.** Privy sends
-it when it is renewing only the access token, and writing the response's absent refresh
-token over the stored one destroys the session. The config writer merges rather than
-replaces for exactly this reason.
+`token verified`, `token check` and `market config` need no token at all.
 
-Three commands need no token at all: `token verified`, `token check`, `market config`.
+## Safety
 
-## Why a CLI rather than letting the agent call HTTP
+Token names, symbols and descriptions are written by whoever deployed the token, and in a
+CLI built for agents they land in a model's context. The client strips invisible characters
+(bidi overrides, zero-width joiners, the Unicode tag block) so hidden text cannot say one
+thing to a model and another to a person. It does not try to detect instructions: that
+filter gets written around, and eats legitimate token copy on the way.
 
-The API answers in **two different envelopes** — `{ok, data}` on most routes and
-`{success, responseObject}` on every `/proxy/*` route. A hand-written request reads
-`undefined` off the wrong one and does not error while doing it. The client unwraps both,
-and every skill can then be about the domain instead of about parsing.
+Addresses are never rewritten.
 
-## Layout
+`rewards claim` is the only command that moves money. It asks on a terminal and refuses
+without one.
 
+## Development
+
+```bash
+npm ci && npm run build && npm test
 ```
-src/              the CLI
-skills/<name>/SKILL.md   one skill each
-.claude-plugin/   plugin + marketplace manifests
-```
+
+CI runs build and tests on Node 20 and 24 and checks that every skill's frontmatter
+matches its directory.
+
+## License
+
+MIT

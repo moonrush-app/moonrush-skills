@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build and test (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20, 24]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      # The package ships as compiled JS and runs on Node. Bun is here only to run the
+      # tests, which use `bun:test`; it is not a runtime dependency of the CLI.
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - run: npm test
+
+      # The thing most likely to be wrong and least likely to be noticed: `files` in
+      # package.json decides what a user actually installs, and a missing entry only shows
+      # up after publishing.
+      - name: Verify publish artifact
+        run: npm pack --dry-run
+
+  skills:
+    name: Skills are well-formed
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # A SKILL.md with broken frontmatter is not a loud failure: the host quietly does not
+      # load the skill, and the first sign is an agent that has never heard of the tool.
+      - name: Every skill has parsable frontmatter with a name and a description
+        run: |
+          set -euo pipefail
+          fail=0
+          for f in skills/*/SKILL.md; do
+            dir=$(basename "$(dirname "$f")")
+            head -1 "$f" | grep -qx -- '---' || { echo "$f: no frontmatter"; fail=1; continue; }
+            name=$(sed -n '2,/^---$/p' "$f" | sed -n 's/^name: *//p' | head -1)
+            desc=$(sed -n '2,/^---$/p' "$f" | sed -n 's/^description: *//p' | head -1)
+            [ -n "$name" ] || { echo "$f: no name"; fail=1; }
+            [ -n "$desc" ] || { echo "$f: no description"; fail=1; }
+            [ "$name" = "$dir" ] || { echo "$f: name '$name' does not match directory '$dir'"; fail=1; }
+          done
+          exit $fail
+
+      # The house style, and a rule this repo keeps being asked for.
+      #
+      # The character is written as an escape rather than typed, so that this step does not
+      # trip over its own source the day somebody widens the paths below.
+      - name: No em dash
+        run: |
+          DASH=$(printf '\u2014')
+          if grep -rn "$DASH" --include='*.md' --include='*.ts' --include='*.json' \
+               skills src docs *.md 2>/dev/null; then
+            echo "Found an em dash. Use a period, comma or colon."
+            exit 1
+          fi

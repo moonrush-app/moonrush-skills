@@ -1,7 +1,7 @@
 {
   "name": "moonrush-cli",
-  "version": "0.1.0",
-  "description": "Moonrush API from the command line \u2014 tokens, positions, rewards, and the admin ledger",
+  "version": "0.2.0",
+  "description": "Moonrush API from the command line: tokens, discovery boards, wallets, trades, leaderboards and creator rewards",
   "type": "module",
   "bin": {
     "moonrush-cli": "./dist/index.js"
@@ -10,6 +10,7 @@
     "dist",
     "skills",
     ".claude-plugin",
+    ".cursor-plugin",
     "Readme.md",
     "LICENSE"
   ],
@@ -26,5 +27,21 @@
   "devDependencies": {
     "@types/node": "^20.19.43",
     "typescript": "^5.9.3"
-  }
+  },
+  "keywords": [
+    "moonrush",
+    "crypto",
+    "solana",
+    "soneium",
+    "base",
+    "token",
+    "defi",
+    "cli",
+    "skills"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/moonrush/moonrush-skills.git"
+  },
+  "homepage": "https://github.com/moonrush/moonrush-skills#readme"
 }
