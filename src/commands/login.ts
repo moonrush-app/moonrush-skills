@@ -154,8 +154,12 @@ export async function runLogin(
     const me = await api<{ userId?: string; username?: string }>("/users");
     process.stdout.write(
       `Signed in as ${me.username ? "@" + me.username : (me.userId ?? "an account")}\n` +
+        // NOT "the session renews itself". A refresh token is stored and the CLI will try,
+        // but Privy decides whether to issue a replacement and has not been observed doing
+        // so. Promising renewal would make the hour-later 401 look like a new bug.
         (f.refresh_token
-          ? "The session renews itself from here.\n"
+          ? "Good for about an hour. A refresh token is stored and the CLI will try to\n" +
+            "renew; if a command answers 401, run this again.\n"
           : "⚠️ No refresh token was available, so this expires in about an hour.\n"),
     );
     return 0;
