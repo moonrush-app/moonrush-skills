@@ -1,6 +1,7 @@
 import { api } from "../lib/api.js";
-import { print } from "../index.js";
+import { print } from "../lib/args.js";
 import { confirm } from "../lib/confirm.js";
+import { checkFlags } from "../lib/validate.js";
 
 const USAGE = `moonrush-cli rewards <sub> [options]
 
@@ -29,6 +30,9 @@ export async function runRewards(
     // apart by exit code alone.
     return flags.help ? 0 : 1;
   }
+
+  const ALLOWED: Record<string, readonly string[]> = { me: [], claim: ["yes"] };
+  if (ALLOWED[sub]) checkFlags(flags, ALLOWED[sub]!, `rewards ${sub}`);
 
   switch (sub) {
     case "me": {

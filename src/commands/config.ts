@@ -1,5 +1,6 @@
 import { CONFIG_FILE, loadConfig, saveConfig } from "../lib/config.js";
 import { api, ApiError } from "../lib/api.js";
+import { checkFlags } from "../lib/validate.js";
 
 /**
  * How somebody gets a token, written where they will be when they need it.
@@ -34,6 +35,8 @@ answering 401. The refresh token is what removes that.
 export async function runConfig(
   flags: Record<string, string | true>,
 ): Promise<number> {
+  checkFlags(flags, ["apply", "refresh", "app-id", "client-id", "check"], "config");
+
   const apply = flags.apply;
   if (typeof apply === "string") {
     const token = apply.trim().replace(/^Bearer\s+/i, "");
@@ -98,10 +101,15 @@ export async function runConfig(
       `  api      ${cfg.apiBase}\n` +
       `  admin    ${cfg.adminBase}\n` +
       `  token    ${cfg.token ? `set (${cfg.token.slice(0, 12)}…)` : "NOT SET"}\n` +
+      // Three states, not two. With no token at all there is nothing to expire, and
+      // saying "expires in about an hour" about it sends the reader looking for a token
+      // that was never there.
       `  renews   ${
         cfg.refreshToken && cfg.privyAppId && cfg.privyClientId
           ? "yes, refresh token stored"
-          : "NO, expires in about an hour"
+          : cfg.token
+            ? "NO, this access token expires in about an hour"
+            : "-"
       }\n`,
   );
   return 0;

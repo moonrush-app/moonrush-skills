@@ -1,6 +1,6 @@
 import { api } from "../lib/api.js";
-import { print } from "../index.js";
-import { parseInteger } from "../lib/validate.js";
+import { print } from "../lib/args.js";
+import { checkFlags, parseInteger } from "../lib/validate.js";
 
 const USAGE = `moonrush-cli leaderboard <metric> [options]
 
@@ -37,6 +37,8 @@ export async function runLeaderboard(
     );
     return 1;
   }
+
+  checkFlags(flags, ["rank", "around", "page", "limit"], `leaderboard ${metric}`);
 
   if (flags.rank) {
     print(await api(`/leaderboard/${metric}/rank`), flags);

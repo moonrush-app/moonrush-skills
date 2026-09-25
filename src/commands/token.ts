@@ -1,7 +1,8 @@
 import { api } from "../lib/api.js";
-import { print } from "../index.js";
+import { print } from "../lib/args.js";
 import { sanitizeRows, sanitizeTokenRow } from "../lib/sanitize.js";
 import {
+  checkFlags,
   parseNetworkId,
   parseNetworkIdList,
   requireAddress,
@@ -12,8 +13,8 @@ const USAGE = `moonrush-cli token <sub> [options]
 
   info       --address <addr> [--networkId <id>]   Full detail: stats, risk, top holders
   search     --q <phrase> [--networkId <id|csv>]   Find a token by name or symbol
-  verified   [--networkId <id|csv>]                The curated Verified roster
-  check      --address <addr> [--networkId <id>]   Is one address Verified
+  verified   [--networkId <id|csv>]                The curated Verified roster (no token needed)
+  check      --address <addr> [--networkId <id>]   Is one address Verified (no token needed)
 
 networkId defaults to Solana (1399811149). Others: 4663 Robinhood, 8453 Base,
 56 BNB, 1868 Soneium, 5042 Arc.`;
@@ -29,6 +30,16 @@ export async function runToken(
     // apart by exit code alone.
     return flags.help ? 0 : 1;
   }
+
+  // Per sub-command, not per command: `token info --q pengu` is just as wrong as
+  // `token info --chain 8453`, and a command-wide list would wave the first one through.
+  const ALLOWED: Record<string, readonly string[]> = {
+    info: ["address", "networkId"],
+    search: ["q", "networkId"],
+    verified: ["networkId"],
+    check: ["address", "networkId"],
+  };
+  if (ALLOWED[sub]) checkFlags(flags, ALLOWED[sub]!, `token ${sub}`);
 
   switch (sub) {
     case "info": {

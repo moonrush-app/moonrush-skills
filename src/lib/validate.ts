@@ -199,3 +199,67 @@ export function requireUuid(raw: unknown, name: string): string {
   }
   return value;
 }
+
+/** Accepted everywhere, so no command has to list them. */
+const GLOBAL_FLAGS = ["raw", "help"];
+
+/** Levenshtein, capped: only used to decide whether to offer a suggestion. */
+function distance(a: string, b: string): number {
+  const prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    let diag = prev[0]!;
+    prev[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const tmp = prev[j]!;
+      prev[j] = Math.min(
+        prev[j]! + 1,
+        prev[j - 1]! + 1,
+        diag + (a[i - 1] === b[j - 1] ? 0 : 1),
+      );
+      diag = tmp;
+    }
+  }
+  return prev[b.length]!;
+}
+
+/**
+ * Refuse a flag this sub-command does not have.
+ *
+ * ⚠️ THE FAILURE THIS EXISTS FOR IS A WRONG ANSWER, NOT AN ERROR. An unrecognised flag used
+ * to be parsed, stored, and then never read, so `token verified --chain 1868` asked for
+ * Soneium, was served Solana, and exited 0 with 118 rows and nothing on screen to say the
+ * flag had been ignored. A reader has no way to tell that from a real answer.
+ *
+ * That is worse for an agent than for a person. An agent guesses a flag name from a
+ * half-remembered convention, gets another chain's numbers, and reports them as fact.
+ *
+ * Suggestions are case-insensitive FIRST, because `--sortby` for `--sortBy` is the most
+ * common miss and an edit distance of zero-ignoring-case is a certainty, not a guess.
+ */
+export function checkFlags(
+  flags: Record<string, unknown>,
+  allowed: readonly string[],
+  context: string,
+): void {
+  const known = [...GLOBAL_FLAGS, ...allowed];
+  const lower = new Map(known.map((k) => [k.toLowerCase(), k]));
+  const unknown = Object.keys(flags).filter((f) => !known.includes(f));
+  if (unknown.length === 0) return;
+
+  const lines = unknown.map((f) => {
+    const exact = lower.get(f.toLowerCase());
+    if (exact) return `  --${f} is not a flag. Did you mean --${exact}?`;
+    const near = known
+      .map((k) => [k, distance(f.toLowerCase(), k.toLowerCase())] as const)
+      .filter(([, d]) => d <= 2)
+      .sort((a, b) => a[1] - b[1])[0];
+    return near
+      ? `  --${f} is not a flag. Did you mean --${near[0]}?`
+      : `  --${f} is not a flag.`;
+  });
+
+  throw new InvalidArgument(
+    `${lines.join("\n")}\n\n${context} accepts: ` +
+      known.map((k) => `--${k}`).join(", "),
+  );
+}

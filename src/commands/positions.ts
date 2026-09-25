@@ -1,6 +1,7 @@
 import { api } from "../lib/api.js";
-import { print } from "../index.js";
+import { print } from "../lib/args.js";
 import {
+  checkFlags,
   parseChoice,
   parseInteger,
   parseNetworkId,
@@ -58,6 +59,14 @@ export async function runPositions(
     // apart by exit code alone.
     return flags.help ? 0 : 1;
   }
+
+  const ALLOWED: Record<string, readonly string[]> = {
+    list: ["userId", "tokenAddress", "status", "sortBy", "limit", "cursor"],
+    me: ["status", "sortBy", "limit", "cursor"],
+    top: ["sortBy", "limit"],
+    stats: ["tokenAddress", "networkId"],
+  };
+  if (ALLOWED[sub]) checkFlags(flags, ALLOWED[sub]!, `positions ${sub}`);
 
   switch (sub) {
     case "list": {

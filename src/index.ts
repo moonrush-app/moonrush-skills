@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { ApiError } from "./lib/api.js";
+import { parseArgs, print } from "./lib/args.js";
 import { InvalidArgument } from "./lib/validate.js";
 import { Refused } from "./lib/confirm.js";
 import { runConfig } from "./commands/config.js";
@@ -21,41 +22,19 @@ const USAGE = `moonrush-cli <command> [options]
   rewards <sub>          Creator earnings, and claiming them
 
 Run a command with --help for its sub-commands.
-Every command prints JSON on stdout. Errors go to stderr and exit 1.`;
+Every command prints JSON on stdout and takes --raw for one line. Errors go to
+stderr and exit 1.
 
-/** `--flag value` and `--flag=value`, plus bare `--flag` as true. */
-export function parseArgs(argv: string[]): Record<string, string | true> {
-  const out: Record<string, string | true> = {};
-  for (let i = 0; i < argv.length; i++) {
-    const a = argv[i];
-    if (!a?.startsWith("--")) continue;
-    const eq = a.indexOf("=");
-    if (eq > 0) {
-      out[a.slice(2, eq)] = a.slice(eq + 1);
-      continue;
-    }
-    const next = argv[i + 1];
-    if (next && !next.startsWith("--")) {
-      out[a.slice(2)] = next;
-      i++;
-    } else {
-      out[a.slice(2)] = true;
-    }
-  }
-  return out;
-}
-
-/** JSON, always. `--raw` puts it on one line for a pipe. */
-export function print(value: unknown, flags: Record<string, unknown>): void {
-  process.stdout.write(
-    (flags.raw ? JSON.stringify(value) : JSON.stringify(value, null, 2)) + "\n",
-  );
-}
+No token yet? These three work without one, so you can check the CLI reaches the
+API before setting anything up:
+  moonrush-cli market config
+  moonrush-cli token verified
+  moonrush-cli token check --address <addr>`;
 
 async function main(): Promise<number> {
   const [, , command, ...rest] = process.argv;
-  const sub = rest.find((a) => !a.startsWith("--"));
-  const flags = parseArgs(rest);
+  const { flags, positionals } = parseArgs(rest);
+  const sub = positionals[0];
 
   if (!command || command === "--help" || command === "-h") {
     process.stdout.write(USAGE + "\n");

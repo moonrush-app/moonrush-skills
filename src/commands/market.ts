@@ -1,7 +1,7 @@
 import { api } from "../lib/api.js";
-import { print } from "../index.js";
+import { print } from "../lib/args.js";
 import { sanitizeRows } from "../lib/sanitize.js";
-import { parseNetworkIdList } from "../lib/validate.js";
+import { checkFlags, parseNetworkIdList } from "../lib/validate.js";
 
 const USAGE = `moonrush-cli market <sub> [options]
 
@@ -22,6 +22,12 @@ export async function runMarket(
     // apart by exit code alone.
     return flags.help ? 0 : 1;
   }
+
+  const ALLOWED: Record<string, readonly string[]> = {
+    board: ["networkId"],
+    config: [],
+  };
+  if (ALLOWED[sub]) checkFlags(flags, ALLOWED[sub]!, `market ${sub}`);
 
   switch (sub) {
     case "board": {

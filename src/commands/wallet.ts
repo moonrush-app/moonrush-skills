@@ -1,7 +1,8 @@
 import { api } from "../lib/api.js";
-import { print } from "../index.js";
+import { print } from "../lib/args.js";
 import {
   InvalidArgument,
+  checkFlags,
   isEvmAddress,
   isSolanaAddress,
   parseChoice,
@@ -70,6 +71,15 @@ export async function runWallet(
     // apart by exit code alone.
     return flags.help ? 0 : 1;
   }
+
+  const ALLOWED: Record<string, readonly string[]> = {
+    balances: ["sol", "evm", "refresh"],
+    portfolio: ["sol", "evm", "refresh", "sortBy"],
+    deposits: [],
+    chart: ["address", "timeRange", "unified"],
+    activity: ["userId", "type", "limit", "cursor"],
+  };
+  if (ALLOWED[sub]) checkFlags(flags, ALLOWED[sub]!, `wallet ${sub}`);
 
   switch (sub) {
     case "balances":
