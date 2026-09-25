@@ -14,14 +14,33 @@ export const CONFIG_FILE = join(CONFIG_DIR, ".env");
 
 export interface Config {
   /**
-   * A Privy access token.
+   * A Privy access token. Short-lived — about an hour.
    *
-   * ⚠️ IT EXPIRES, typically within the hour, and there is no refresh path here: Privy
-   * rotates it in a browser or an app, not in a terminal. That is a real limitation rather
-   * than an oversight, and every command says so when it sees a 401 instead of reporting a
-   * generic failure the user would go and debug.
+   * On its own it is a one-hour CLI. With [refreshToken] beside it the client renews it
+   * automatically and the session lasts as long as Privy keeps it alive.
    */
   token?: string;
+
+  /**
+   * The Privy refresh token, which is what makes this usable.
+   *
+   * ⚠️ THE LONG-LIVED CREDENTIAL. The access token beside it expires in an hour and is
+   * worth little; this one mints replacements for as long as the session lives, so it is
+   * the file's reason for being mode 600.
+   */
+  refreshToken?: string;
+
+  /** Privy app and client ids. Public values — they ship in the web bundle. */
+  privyAppId?: string;
+  privyClientId?: string;
+
+  /**
+   * The origin Privy is told the request came from.
+   *
+   * Must be one registered for this Privy app or the refresh is refused. Configurable
+   * rather than hardcoded because the app and the web client use different ones.
+   */
+  privyOrigin: string;
   /** The API origin. Overridable so a developer can point at a preview deployment. */
   apiBase: string;
   /** The admin console origin, for the admin-only commands. */
@@ -31,6 +50,8 @@ export interface Config {
 const DEFAULTS = {
   apiBase: "https://social.moonrush.space",
   adminBase: "https://moonrush-admin.contact-9ba.workers.dev",
+  // Must be an origin registered for the Privy app, or the refresh is refused.
+  privyOrigin: "https://trade.moonrush.space",
 };
 
 function parseEnv(text: string): Record<string, string> {
@@ -61,9 +82,40 @@ export function loadConfig(): Config {
   const pick = (key: string) => process.env[key] ?? fromFile[key];
   return {
     token: pick("MOONRUSH_TOKEN"),
+    refreshToken: pick("MOONRUSH_REFRESH_TOKEN"),
+    privyAppId: pick("MOONRUSH_PRIVY_APP_ID"),
+    privyClientId: pick("MOONRUSH_PRIVY_CLIENT_ID"),
     apiBase: pick("MOONRUSH_API_BASE") ?? DEFAULTS.apiBase,
     adminBase: pick("MOONRUSH_ADMIN_BASE") ?? DEFAULTS.adminBase,
+    privyOrigin: pick("MOONRUSH_PRIVY_ORIGIN") ?? DEFAULTS.privyOrigin,
   };
+}
+
+/**
+ * Merge fields into the config file, keeping everything already there.
+ *
+ * Merged rather than rewritten because a refresh writes ONE field: replacing the file with
+ * just that field would drop the refresh token the next refresh needs, which is the exact
+ * failure this whole path exists to avoid.
+ */
+export function saveConfig(patch: Record<string, string | undefined>): void {
+  mkdirSync(CONFIG_DIR, { recursive: true });
+  const existing = existsSync(CONFIG_FILE)
+    ? parseEnv(readFileSync(CONFIG_FILE, "utf8"))
+    : {};
+  for (const [k, v] of Object.entries(patch)) {
+    if (v === undefined) continue;
+    existing[k] = v;
+  }
+  const body =
+    "# Moonrush CLI. Written by `moonrush-cli config --apply`.\n" +
+    "# MOONRUSH_REFRESH_TOKEN is the long-lived credential. Treat this file as a secret.\n" +
+    Object.entries(existing)
+      .map(([k, v]) => `${k}=${v}`)
+      .join("\n") +
+    "\n";
+  writeFileSync(CONFIG_FILE, body, { mode: 0o600 });
+  chmodSync(CONFIG_FILE, 0o600);
 }
 
 export function saveToken(token: string): void {

@@ -69,12 +69,16 @@ main()
   .then((code) => process.exit(code))
   .catch((err: unknown) => {
     if (err instanceof ApiError && err.isExpiredAuth) {
-      // The likeliest failure by far, and the one a generic message sends people hunting
-      // for. A Privy token lasts about an hour and cannot be refreshed from here.
+      // Reached only after a refresh was TRIED and could not help — either no refresh token
+      // is stored, or Privy ended the session. Those need different things from the reader,
+      // so they are not one message.
       process.stderr.write(
-        "401 — the token is missing or expired.\n" +
-          "Privy tokens last about an hour and cannot be refreshed from a terminal.\n" +
-          "Get a fresh one and run: moonrush-cli config --apply <TOKEN>\n",
+        err.code === "PRIVY_SESSION_ENDED"
+          ? "401 — Privy ended this session.\n" +
+              "Sign in again and re-apply: moonrush-cli config\n"
+          : "401 — no usable credentials.\n" +
+              "An access token alone expires in about an hour. Storing a refresh token\n" +
+              "lets the CLI renew itself. Run: moonrush-cli config\n",
       );
       process.exit(1);
     }

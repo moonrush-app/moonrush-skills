@@ -1,4 +1,4 @@
-import { CONFIG_FILE, loadConfig, saveToken } from "../lib/config.js";
+import { CONFIG_FILE, loadConfig, saveConfig } from "../lib/config.js";
 import { api, ApiError } from "../lib/api.js";
 
 /**
@@ -9,22 +9,27 @@ import { api, ApiError } from "../lib/api.js";
  * nothing more, so the honest instruction is "copy it from a place you are already signed
  * in", and the honest warning is that it expires.
  */
-const HOW_TO = `Moonrush uses Privy access tokens. There is no API key and no device flow:
-Privy issues the token to a signed-in browser or app, so the CLI holds a copy.
+const HOW_TO = `Moonrush authenticates with Privy. The CLI keeps a Privy SESSION, not just a
+token: given a refresh token it mints new access tokens itself, so it keeps working for as
+long as the session lives rather than for the hour an access token lasts.
 
-To get one:
-  1. Open the Moonrush web app and sign in:  https://app.moonrush.space
-  2. Open DevTools, Network tab, and click any request to social.moonrush.space
-  3. Copy the value after "Bearer " in the Authorization header
+To set it up, from a signed-in browser at https://app.moonrush.space:
+
+  1. DevTools, Network tab, find the POST to auth.privy.io/api/v1/sessions
+  2. From its RESPONSE copy \`privy_access_token\` and \`refresh_token\`
+  3. From its REQUEST HEADERS copy \`privy-app-id\` and \`privy-client-id\`
 
 Then:
-  moonrush-cli config --apply <TOKEN>
 
-It is stored at ~/.config/moonrush/.env, mode 600.
+  moonrush-cli config --apply <ACCESS_TOKEN> \\
+    --refresh <REFRESH_TOKEN> --app-id <APP_ID> --client-id <CLIENT_ID>
 
-⚠️ IT EXPIRES, usually within the hour, and cannot be refreshed from here. When commands
-start answering 401, repeat the steps above. That is a limitation of the auth design, not
-a bug in the CLI.`;
+Stored at ~/.config/moonrush/.env, mode 600.
+
+The access token alone also works, and gives you about an hour before commands start
+answering 401. The refresh token is what removes that.
+
+⚠️ The refresh token is the LONG-LIVED credential. Treat that file as a secret.`;
 
 export async function runConfig(
   flags: Record<string, string | true>,
@@ -36,15 +41,30 @@ export async function runConfig(
       process.stderr.write("A token is required: --apply <TOKEN>\n");
       return 1;
     }
-    saveToken(token);
+
+    const str = (v: unknown) => (typeof v === "string" ? v.trim() : undefined);
+    saveConfig({
+      MOONRUSH_TOKEN: token,
+      MOONRUSH_REFRESH_TOKEN: str(flags.refresh),
+      MOONRUSH_PRIVY_APP_ID: str(flags["app-id"]),
+      MOONRUSH_PRIVY_CLIENT_ID: str(flags["client-id"]),
+    });
 
     // VERIFIED, not just stored. Writing a bad token and reporting success moves the
     // failure to whichever command runs next, where it reads as that command being broken.
     try {
       const me = await api<{ userId?: string; username?: string }>("/users");
+      const cfg = loadConfig();
+      const renewable = Boolean(
+        cfg.refreshToken && cfg.privyAppId && cfg.privyClientId,
+      );
       process.stdout.write(
         `Saved to ${CONFIG_FILE}\n` +
-          `Verified as ${me.username ? "@" + me.username : (me.userId ?? "an account")}\n`,
+          `Verified as ${me.username ? "@" + me.username : (me.userId ?? "an account")}\n` +
+          (renewable
+            ? "Session renews itself; no need to paste again while it lives.\n"
+            : "⚠️ No refresh token stored. This will stop working in about an hour.\n" +
+              "   Re-run with --refresh, --app-id and --client-id to keep it alive.\n"),
       );
       return 0;
     } catch (e) {
@@ -77,7 +97,12 @@ export async function runConfig(
     `${HOW_TO}\n\nCurrent:\n` +
       `  api      ${cfg.apiBase}\n` +
       `  admin    ${cfg.adminBase}\n` +
-      `  token    ${cfg.token ? `set (${cfg.token.slice(0, 12)}…)` : "NOT SET"}\n`,
+      `  token    ${cfg.token ? `set (${cfg.token.slice(0, 12)}…)` : "NOT SET"}\n` +
+      `  renews   ${
+        cfg.refreshToken && cfg.privyAppId && cfg.privyClientId
+          ? "yes — refresh token stored"
+          : "NO — expires in about an hour"
+      }\n`,
   );
   return 0;
 }

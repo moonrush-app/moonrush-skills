@@ -15,19 +15,30 @@ As an agent plugin:
 npx skills add moonrush/moonrush-skills
 ```
 
-## Auth, and its one real limitation
+## Auth
 
-Moonrush authenticates with **Privy**. There is no API key and no device flow: Privy issues
-its token to a signed-in browser or app, so the CLI holds a copy.
+Moonrush authenticates with **Privy**. The CLI keeps a **session**, not just a token: given
+a refresh token it calls `POST auth.privy.io/api/v1/sessions` itself and mints a new access
+token whenever one expires.
 
-⚠️ **The token expires, usually within the hour, and cannot be refreshed from a terminal.**
-When commands start answering 401, get a fresh one and re-apply it. That is the auth design,
-not a defect in the CLI — and it is why long-running automation is not currently possible
-without a backend change.
+So it keeps working for as long as the Privy session lives, rather than for the hour an
+access token lasts.
 
-`moonrush-cli config` prints the steps. The token is stored at `~/.config/moonrush/.env`,
-mode 600. Environment variables override the file, so `MOONRUSH_TOKEN=… moonrush-cli …`
-needs no file and leaves nothing behind.
+```
+moonrush-cli config --apply <ACCESS_TOKEN> \
+  --refresh <REFRESH_TOKEN> --app-id <APP_ID> --client-id <CLIENT_ID>
+```
+
+`moonrush-cli config` prints where to find each of those. Stored at
+`~/.config/moonrush/.env`, mode 600 — the refresh token is the long-lived credential, so
+treat that file as a secret. Environment variables override the file.
+
+An access token on its own also works and gives about an hour.
+
+⚠️ **`session_update_action: "ignore"` means keep the refresh token you have.** Privy sends
+it when it is renewing only the access token, and writing the response's absent refresh
+token over the stored one destroys the session. The config writer merges rather than
+replaces for exactly this reason.
 
 Three commands need no token at all: `token verified`, `token check`, `market config`.
 

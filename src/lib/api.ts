@@ -1,4 +1,5 @@
-import { loadConfig } from "./config.js";
+import { loadConfig, saveConfig } from "./config.js";
+import { PrivyAuthExpired, refreshPrivySession } from "./privy.js";
 
 /**
  * One HTTP client for an API that answers in TWO envelopes.
@@ -21,13 +22,7 @@ export class ApiError extends Error {
     this.name = "ApiError";
   }
 
-  /**
-   * The one failure worth its own message.
-   *
-   * A Privy token expires within the hour and cannot be refreshed from a terminal, so a 401
-   * here is almost never "wrong credentials" — it is "the same credentials, an hour later".
-   * Saying so turns a debugging session into a copy and paste.
-   */
+  /** A 401 that survived a refresh attempt, so re-applying credentials is the only fix. */
   get isExpiredAuth(): boolean {
     return this.status === 401;
   }
@@ -42,11 +37,52 @@ interface Options {
   anonymous?: boolean;
 }
 
+/**
+ * Mint a new access token from the stored refresh token, and keep it.
+ *
+ * Returns null when there is nothing to refresh WITH, which is a different situation from a
+ * refresh that failed: the first needs credentials, the second needs a sign-in.
+ */
+async function tryRefresh(): Promise<string | null> {
+  const cfg = loadConfig();
+  if (!cfg.refreshToken || !cfg.privyAppId || !cfg.privyClientId) return null;
+
+  const session = await refreshPrivySession({
+    refreshToken: cfg.refreshToken,
+    accessToken: cfg.token,
+    appId: cfg.privyAppId,
+    clientId: cfg.privyClientId,
+    origin: cfg.privyOrigin,
+  });
+
+  saveConfig({
+    MOONRUSH_TOKEN: session.accessToken,
+    // ONLY when Privy sent a new one. On `ignore` it did not, and `saveConfig` skips
+    // undefined rather than clearing the field — which is the whole reason it merges.
+    MOONRUSH_REFRESH_TOKEN: session.refreshToken ?? undefined,
+  });
+  return session.accessToken;
+}
+
 export async function api<T>(path: string, opts: Options = {}): Promise<T> {
+  return request<T>(path, opts, true);
+}
+
+async function request<T>(
+  path: string,
+  opts: Options,
+  mayRefresh: boolean,
+): Promise<T> {
   const cfg = loadConfig();
   const base = opts.admin ? cfg.adminBase : cfg.apiBase;
 
   if (!opts.anonymous && !cfg.token) {
+    // No access token at all, but possibly a refresh token: mint one rather than telling
+    // somebody to go and paste what we can fetch ourselves.
+    if (mayRefresh) {
+      const minted = await tryRefresh().catch(() => null);
+      if (minted) return request<T>(path, opts, false);
+    }
     throw new ApiError(
       "No token configured. Run `moonrush-cli config` for how to get one.",
       401,
@@ -84,6 +120,22 @@ export async function api<T>(path: string, opts: Options = {}): Promise<T> {
     responseObject?: unknown;
     error?: unknown;
   } | null;
+
+  // ONE retry, and only on a 401. An access token expiring mid-session is the ordinary
+  // case, not an error worth surfacing; anything else is a real failure and retrying it
+  // would just take twice as long to report.
+  if (res.status === 401 && mayRefresh && !opts.anonymous) {
+    try {
+      const minted = await tryRefresh();
+      if (minted) return request<T>(path, opts, false);
+    } catch (e) {
+      if (e instanceof PrivyAuthExpired) {
+        throw new ApiError(e.message, 401, "PRIVY_SESSION_ENDED");
+      }
+      // A refresh that failed for any other reason falls through to the original 401, which
+      // is the more useful of the two messages.
+    }
+  }
 
   if (!res.ok || body?.ok === false || body?.success === false) {
     const err = body?.error;
