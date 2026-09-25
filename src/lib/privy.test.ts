@@ -140,3 +140,88 @@ describe("the request", () => {
     });
   });
 });
+
+describe("what the live endpoint actually returns", () => {
+  test("the access token can arrive as `token` with `privy_access_token` null", async () => {
+    // MEASURED, NOT ASSUMED. A real successful refresh came back
+    // { token: <jwt>, privy_access_token: null, session_update_action: "ignore" }.
+    // Reading only the documented name threw "Privy returned no access token" at a
+    // response that was carrying one the whole time, one field over. Every test above this
+    // one used privy_access_token, so the suite agreed with the bug.
+    answers(200, {
+      session_update_action: "ignore",
+      privy_access_token: null,
+      token: "access-from-token-field",
+      refresh_token: "echoed",
+    });
+    const s = await call();
+    expect(s.accessToken).toBe("access-from-token-field");
+    expect(s.refreshToken).toBeNull();
+  });
+
+  test("the documented name still wins when both are present", async () => {
+    answers(200, {
+      session_update_action: "set",
+      privy_access_token: "documented",
+      token: "other",
+      refresh_token: "r",
+    });
+    expect((await call()).accessToken).toBe("documented");
+  });
+
+  test("neither key present names the action and the keys it did get", async () => {
+    // A bare "no access token" sent me looking at the request for an hour. The response is
+    // what disagreed, so the response is what the message has to describe.
+    answers(200, { session_update_action: "set", user: {} });
+    try {
+      await call();
+      throw new Error("should have thrown");
+    } catch (e) {
+      const m = String((e as Error).message);
+      expect(m).toContain("action: set");
+      expect(m).toContain("user");
+    }
+  });
+
+  test("a wrong origin is a 403 with its own reason, not a dead session", async () => {
+    // Privy answers 403 { code: "invalid_origin" } when the origin does not match the one
+    // the session was issued to. It must NOT read as an expired session: the tokens are
+    // fine and the fix is one flag, not a fresh sign-in.
+    answers(403, { error: "Origin not allowed", code: "invalid_origin" });
+    try {
+      await call();
+      throw new Error("should have thrown");
+    } catch (e) {
+      expect(e).not.toBeInstanceOf(PrivyAuthExpired);
+      expect(String((e as Error).message)).toContain("403");
+    }
+  });
+});
+
+describe("whose fault the 401 is", () => {
+  test("no access token sent is OUR mistake, not a dead session", async () => {
+    // Privy sends `missing_or_invalid_token` for BOTH "you sent none" and "the one you
+    // sent is dead", so the code cannot separate them. We can, because we know what we
+    // sent. Getting this backwards told somebody holding a perfectly good refresh token
+    // to go and sign in again, which is the most expensive wrong advice available.
+    answers(401, { error: "Missing access token", code: "missing_or_invalid_token" });
+    try {
+      await refreshPrivySession({
+        refreshToken: "refresh-1",
+        accessToken: "",
+        appId: "app",
+        clientId: "client",
+        origin: "https://app.moonrush.space",
+      });
+      throw new Error("should have thrown");
+    } catch (e) {
+      expect(e).not.toBeInstanceOf(PrivyAuthExpired);
+      expect(String((e as Error).message)).toContain("even an expired one");
+    }
+  });
+
+  test("the same answer IS terminal once we did send one", async () => {
+    answers(401, { error: "Invalid token", code: "missing_or_invalid_token" });
+    await expect(call()).rejects.toBeInstanceOf(PrivyAuthExpired);
+  });
+});

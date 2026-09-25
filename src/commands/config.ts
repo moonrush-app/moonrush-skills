@@ -28,7 +28,8 @@ auth.privy.io/api/v1/sessions: \`privy_access_token\` and \`refresh_token\` in t
 response, \`privy-app-id\` and \`privy-client-id\` in the request headers.
 
   moonrush-cli config --apply <ACCESS_TOKEN> \\
-    --refresh <REFRESH_TOKEN> --app-id <APP_ID> --client-id <CLIENT_ID>
+    --refresh <REFRESH_TOKEN> --app-id <APP_ID> --client-id <CLIENT_ID> \\
+    --origin https://app.moonrush.space
 
 Stored at ~/.config/moonrush/.env, mode 600.
 
@@ -38,7 +39,7 @@ answering 401. The refresh token is what removes that.`;
 export async function runConfig(
   flags: Record<string, string | true>,
 ): Promise<number> {
-  checkFlags(flags, ["apply", "refresh", "app-id", "client-id", "check"], "config");
+  checkFlags(flags, ["apply", "refresh", "app-id", "client-id", "origin", "check"], "config");
 
   const apply = flags.apply;
   if (typeof apply === "string") {
@@ -54,6 +55,10 @@ export async function runConfig(
       MOONRUSH_REFRESH_TOKEN: str(flags.refresh),
       MOONRUSH_PRIVY_APP_ID: str(flags["app-id"]),
       MOONRUSH_PRIVY_CLIENT_ID: str(flags["client-id"]),
+      // The origin the tokens were issued to. Privy checks it and answers
+      // `403 Origin not allowed` on a mismatch, so it belongs beside the tokens rather
+      // than in a default that has to be right for everybody.
+      MOONRUSH_PRIVY_ORIGIN: str(flags.origin),
     });
 
     // VERIFIED, not just stored. Writing a bad token and reporting success moves the
@@ -103,6 +108,7 @@ export async function runConfig(
     `${HOW_TO}\n\nCurrent:\n` +
       `  api      ${cfg.apiBase}\n` +
       `  admin    ${cfg.adminBase}\n` +
+      `  origin   ${cfg.privyOrigin}\n` +
       `  token    ${cfg.token ? `set (${cfg.token.slice(0, 12)}…)` : "NOT SET"}\n` +
       // Three states, not two. With no token at all there is nothing to expire, and
       // saying "expires in about an hour" about it sends the reader looking for a token

@@ -81,3 +81,38 @@ describe("parseArgs keeps positionals apart from flag values", () => {
     expect(positionals).toEqual(["me"]);
   });
 });
+
+describe("one flag name, two meanings", () => {
+  test("config --refresh takes the token as a VALUE", () => {
+    // THE REGRESSION THIS PINS. `refresh` was in one global boolean list, so
+    // `config --apply <at> --refresh <rt>` parsed as {refresh: true}, dropped the token
+    // into the positionals, and saved everything except the long-lived credential. The CLI
+    // then printed "No refresh token stored" about a token it had just been handed.
+    const { flags, positionals } = parseArgs(
+      ["--apply", "access", "--refresh", "REFRESH_VALUE"],
+      "config",
+    );
+    expect(flags.refresh).toBe("REFRESH_VALUE");
+    expect(positionals).toEqual([]);
+  });
+
+  test("wallet --refresh is still a bare switch", () => {
+    // The same name on `wallet balances` means "skip the 15 second cache" and must not
+    // swallow the sub-command standing next to it.
+    const { flags, positionals } = parseArgs(["balances", "--refresh"], "wallet");
+    expect(flags.refresh).toBe(true);
+    expect(positionals).toEqual(["balances"]);
+  });
+
+  test("wallet --refresh before the sub-command does not eat it", () => {
+    const { flags, positionals } = parseArgs(["--refresh", "balances"], "wallet");
+    expect(flags.refresh).toBe(true);
+    expect(positionals).toEqual(["balances"]);
+  });
+
+  test("an unknown command falls back to the global booleans only", () => {
+    // No command yet is not a reason to guess: only --raw and --help are certain.
+    const { flags } = parseArgs(["--refresh", "x"], "");
+    expect(flags.refresh).toBe("x");
+  });
+});

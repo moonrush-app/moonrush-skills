@@ -21,27 +21,37 @@
  *
  * `--flag value` syntax cannot tell `--raw me` apart from `--limit 50` without knowing
  * which flags take a value. Without this list `positions --raw me` parses as
- * `{raw: "me"}` with no sub-command at all, and the CLI answers with its usage screen for
- * a command that was perfectly well formed.
+ * `{raw: "me"}` with no sub-command at all.
  *
- * Declared here rather than per command because the parser runs before any command is
- * chosen. The cost of the list being wrong is one flag misparsing, which a test catches;
- * the cost of not having it is a whole command shape being unusable.
+ * ⚠️ PER COMMAND, AND THAT IS NOT A REFINEMENT. `--refresh` is a bare switch on
+ * `wallet balances` and carries the refresh TOKEN on `config`. A single global list has to
+ * pick one, and picking boolean made `config --apply ... --refresh <token>` parse the token
+ * as a positional and drop it: the CLI reported success, saved everything except the one
+ * long-lived credential, and then said "No refresh token stored" about a token that had
+ * just been handed to it. Silent loss of the value the command exists to store.
+ *
+ * The command is known before parsing (it is argv[2]), so there is nothing to work around.
  */
-const BOOLEAN_FLAGS = new Set([
-  "raw",
-  "help",
-  "refresh",
-  "rank",
-  "around",
-  "yes",
-  "check",
-]);
+const GLOBAL_BOOLEANS = ["raw", "help"] as const;
 
-export function parseArgs(argv: string[]): {
+const BOOLEANS_BY_COMMAND: Record<string, readonly string[]> = {
+  config: ["check"],
+  wallet: ["refresh"],
+  leaderboard: ["rank", "around"],
+  rewards: ["yes"],
+};
+
+export function parseArgs(
+  argv: string[],
+  command = "",
+): {
   flags: Record<string, string | true>;
   positionals: string[];
 } {
+  const booleans = new Set<string>([
+    ...GLOBAL_BOOLEANS,
+    ...(BOOLEANS_BY_COMMAND[command] ?? []),
+  ]);
   const flags: Record<string, string | true> = {};
   const positionals: string[] = [];
   for (let i = 0; i < argv.length; i++) {
@@ -58,7 +68,7 @@ export function parseArgs(argv: string[]): {
     }
     const name = a.slice(2);
     const next = argv[i + 1];
-    if (!BOOLEAN_FLAGS.has(name) && next && !next.startsWith("--")) {
+    if (!booleans.has(name) && next && !next.startsWith("--")) {
       flags[name] = next;
       i++;
     } else {

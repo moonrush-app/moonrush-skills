@@ -61,7 +61,8 @@ a copy button:
 
 ```bash
 moonrush-cli config --apply <ACCESS_TOKEN> \
-  --refresh <REFRESH_TOKEN> --app-id <APP_ID> --client-id <CLIENT_ID>
+  --refresh <REFRESH_TOKEN> --app-id <APP_ID> --client-id <CLIENT_ID> \
+  --origin https://app.moonrush.space
 ```
 
 ⚠️ That page shows a long-lived credential. Do not screen share it. Stored at `~/.config/moonrush/.env`,

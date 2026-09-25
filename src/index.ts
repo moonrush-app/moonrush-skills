@@ -33,7 +33,7 @@ API before setting anything up:
 
 async function main(): Promise<number> {
   const [, , command, ...rest] = process.argv;
-  const { flags, positionals } = parseArgs(rest);
+  const { flags, positionals } = parseArgs(rest, command);
   const sub = positionals[0];
 
   if (!command || command === "--help" || command === "-h") {
@@ -62,14 +62,41 @@ async function main(): Promise<number> {
   }
 }
 
+/**
+ * Wait for stdout to reach the OS before ending the process.
+ *
+ * ⚠️ `process.exit()` DISCARDS BUFFERED STDOUT WHEN STDOUT IS A PIPE. Writes to a file or a
+ * terminal are synchronous and survive it; writes to a pipe are not. So
+ * `market board --raw > file.json` produced 571KB of valid JSON and
+ * `market board --raw | jq` produced exactly 65536 bytes of truncated JSON, which is the
+ * pipe buffer and nothing more. Same command, same data, and the broken one is the form
+ * the README recommends.
+ *
+ * A zero-length write's callback runs after every write queued before it has been handed
+ * over, because writes are ordered. That is the whole fix.
+ */
+function flushStdout(): Promise<void> {
+  return new Promise((resolve) => {
+    // EPIPE is normal here: `| head` closes the pipe as soon as it has enough. Resolving
+    // rather than throwing keeps that from being reported as a failure of the command.
+    process.stdout.once("error", () => resolve());
+    process.stdout.write("", () => resolve());
+  });
+}
+
+async function exit(code: number): Promise<never> {
+  await flushStdout();
+  process.exit(code);
+}
+
 main()
-  .then((code) => process.exit(code))
+  .then((code) => exit(code))
   .catch((err: unknown) => {
     // A BAD ARGUMENT IS NOT A STACK TRACE. These messages already name the argument and
     // list what it accepts, so wrapping them in anything would only bury that.
     if (err instanceof InvalidArgument || err instanceof Refused) {
       process.stderr.write(err.message + "\n");
-      process.exit(1);
+      return exit(1);
     }
     if (err instanceof ApiError && err.isExpiredAuth) {
       // Reached only after a refresh was TRIED and could not help: either no refresh token
@@ -83,10 +110,10 @@ main()
               "An access token alone expires in about an hour. Storing a refresh token\n" +
               "lets the CLI renew itself. Run: moonrush-cli config\n",
       );
-      process.exit(1);
+      return exit(1);
     }
     process.stderr.write(
       (err instanceof Error ? err.message : String(err)) + "\n",
     );
-    process.exit(1);
+    return exit(1);
   });

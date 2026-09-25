@@ -9,7 +9,8 @@ on one line, which is what you want when piping into `jq`.
 moonrush-cli config                 # how to get credentials, and what is configured now
 moonrush-cli config --check         # exit 0 if a working token is configured, else 1
 moonrush-cli config --apply <ACCESS_TOKEN> \
-  --refresh <REFRESH_TOKEN> --app-id <APP_ID> --client-id <CLIENT_ID>
+  --refresh <REFRESH_TOKEN> --app-id <APP_ID> --client-id <CLIENT_ID> \
+  --origin https://app.moonrush.space
 ```
 
 There is no API key. Moonrush authenticates with Privy, so the session comes out of a

@@ -50,8 +50,17 @@ export interface Config {
 const DEFAULTS = {
   apiBase: "https://social.moonrush.space",
   adminBase: "https://moonrush-admin.contact-9ba.workers.dev",
-  // Must be an origin registered for the Privy app, or the refresh is refused.
-  privyOrigin: "https://trade.moonrush.space",
+  /**
+   * ⚠️ MUST MATCH WHERE THE TOKENS CAME FROM. Privy checks it against the app's allowlist
+   * and answers `403 Origin not allowed` otherwise, which is how this default was found to
+   * be wrong: it was `trade.moonrush.space`, copied from the mobile client, while the
+   * documented way to get a session is the web app on `app.moonrush.space`. Every refresh
+   * from a browser-obtained token failed, and the failure was reported as a plain 401.
+   *
+   * `config --apply --origin` overrides it, and the setup page fills it in from its own
+   * location so the question never has to be answered by hand.
+   */
+  privyOrigin: "https://app.moonrush.space",
 };
 
 function parseEnv(text: string): Record<string, string> {

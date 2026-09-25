@@ -132,8 +132,23 @@ async function request<T>(
       if (e instanceof PrivyAuthExpired) {
         throw new ApiError(e.message, 401, "PRIVY_SESSION_ENDED");
       }
-      // A refresh that failed for any other reason falls through to the original 401, which
-      // is the more useful of the two messages.
+      /**
+       * ⚠️ SAY WHY THE REFRESH FAILED. This used to fall through to the original 401 on the
+       * reasoning that it was "the more useful of the two messages". It was not.
+       *
+       * The refresh was answering `403 Origin not allowed` for every session taken from the
+       * web app, because the default origin named the mobile client. That is a one-line
+       * fix and the message says exactly which line. Swallowed, it surfaced as
+       * "401. No usable credentials. Run: moonrush-cli config", which sends the reader to
+       * re-paste credentials that were never the problem, and to do it again the next time.
+       *
+       * The 401 is still printed underneath, because it is also true.
+       */
+      process.stderr.write(
+        `Could not refresh the session: ${
+          e instanceof Error ? e.message : String(e)
+        }\n`,
+      );
     }
   }
 

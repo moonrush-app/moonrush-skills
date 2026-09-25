@@ -79,9 +79,29 @@ export async function refreshPrivySession(
 
   if (!res.ok) {
     const code = String(body.code ?? "").toLowerCase();
-    // The one refusal that is terminal. Anything else may be transient and is worth a
-    // retry; this one means the refresh token itself is gone and only a fresh sign-in
-    // helps, so it is a different class of error rather than a worse message.
+
+    /**
+     * ⚠️ A 401 HERE IS NOT AUTOMATICALLY A DEAD REFRESH TOKEN.
+     *
+     * Privy wants the access token alongside the refresh token, even an expired one, and
+     * answers 401 when the Authorization header is missing entirely. Mapping every 401 to
+     * "the refresh token is no longer valid" told somebody with a perfectly good refresh
+     * token to go and sign in again, which is both wrong and the most expensive advice
+     * available.
+     *
+     * So the terminal case is the code Privy actually sends for it, plus a 401 that came
+     * back while we DID authenticate. A 401 with nothing sent is a different sentence.
+     */
+    // OUR FAULT FIRST. Privy sends `missing_or_invalid_token` for BOTH "you sent none" and
+    // "the one you sent is dead", so the code cannot tell them apart. We can: we know
+    // whether we sent one. Checking that first is what keeps a local mistake from being
+    // reported as the user's session having ended.
+    if (res.status === 401 && !p.accessToken) {
+      throw new Error(
+        "Privy needs the access token alongside the refresh token, even an expired one, " +
+          "and none is stored. Re-apply with --apply and --refresh together.",
+      );
+    }
     if (code === "missing_or_invalid_token" || res.status === 401) {
       throw new PrivyAuthExpired(
         "The refresh token is no longer valid. Sign in again and re-apply.",
@@ -97,9 +117,25 @@ export async function refreshPrivySession(
     throw new PrivyAuthExpired("Privy ended this session. Sign in again.");
   }
 
-  const accessToken = body.privy_access_token;
-  if (typeof accessToken !== "string" || !accessToken) {
-    throw new Error("Privy returned no access token");
+  /**
+   * TWO KEYS, AND THE DOCUMENTED ONE CAN BE NULL.
+   *
+   * Measured against the live endpoint: a successful refresh came back
+   * `{ token: <jwt>, privy_access_token: null, session_update_action: "ignore" }`. Reading
+   * only `privy_access_token` threw "Privy returned no access token" on a response that
+   * was carrying one the whole time, one field over.
+   *
+   * `token` is read second rather than first only because `privy_access_token` is the name
+   * Privy's own docs use; neither is optional to handle.
+   */
+  const accessToken =
+    (typeof body.privy_access_token === "string" && body.privy_access_token) ||
+    (typeof body.token === "string" && body.token) ||
+    null;
+  if (!accessToken) {
+    throw new Error(
+      `Privy returned no access token (action: ${action}, keys: ${Object.keys(body).join(", ")})`,
+    );
   }
 
   return {
