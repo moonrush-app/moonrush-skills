@@ -110,10 +110,11 @@ main()
       process.stderr.write(
         err.code === "PRIVY_SESSION_ENDED"
           ? "401. Privy ended this session.\n" +
-              "Sign in again and re-apply: moonrush-cli config\n"
-          : "401. No usable credentials.\n" +
-              "An access token alone expires in about an hour. Storing a refresh token\n" +
-              "lets the CLI renew itself. Run: moonrush-cli config\n",
+              "Sign in again: moonrush-cli login\n"
+          : "401. The session is not usable.\n" +
+              "Sign in again: moonrush-cli login\n\n" +
+              "An access token lasts about an hour. The CLI tries to renew it, and\n" +
+              "cannot always: Privy only issues a replacement when it decides to.\n",
       );
       return exit(1);
     }

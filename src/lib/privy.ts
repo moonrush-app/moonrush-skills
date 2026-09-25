@@ -118,23 +118,30 @@ export async function refreshPrivySession(
   }
 
   /**
-   * TWO KEYS, AND THE DOCUMENTED ONE CAN BE NULL.
+   * ⚠️ ONLY `privy_access_token`. NOT `token`, WHICH LOOKS RIGHT AND IS NOT.
    *
-   * Measured against the live endpoint: a successful refresh came back
-   * `{ token: <jwt>, privy_access_token: null, session_update_action: "ignore" }`. Reading
-   * only `privy_access_token` threw "Privy returned no access token" on a response that
-   * was carrying one the whole time, one field over.
+   * I fell for this once and made things worse, so the reason is written down. A refresh
+   * answers with both, and they have DIFFERENT AUDIENCES:
    *
-   * `token` is read second rather than first only because `privy_access_token` is the name
-   * Privy's own docs use; neither is optional to handle.
+   *   privy_access_token   aud = <appId>              what our API verifies
+   *   token                aud = https://auth.privy.io, att = "pat"
+   *
+   * The second is Privy's own PAT, for Privy's own API. Reading it as a fallback when
+   * `privy_access_token` came back null did not rescue a refresh: it overwrote a merely
+   * EXPIRED app token with one our backend will reject forever, turning a session that
+   * needed renewing into a session that could not be used at all.
+   *
+   * So a null here means Privy issued no new app token, and that is a fact to report, not
+   * a gap to fill from the nearest field that also contains a JWT.
    */
   const accessToken =
-    (typeof body.privy_access_token === "string" && body.privy_access_token) ||
-    (typeof body.token === "string" && body.token) ||
-    null;
+    typeof body.privy_access_token === "string" && body.privy_access_token
+      ? body.privy_access_token
+      : null;
   if (!accessToken) {
     throw new Error(
-      `Privy returned no access token (action: ${action}, keys: ${Object.keys(body).join(", ")})`,
+      `Privy issued no new access token (session_update_action: ${action}). ` +
+        `The stored one is unchanged.`,
     );
   }
 
