@@ -1,5 +1,6 @@
 import { api } from "../lib/api.js";
 import { print } from "../index.js";
+import { sanitizeRows } from "../lib/sanitize.js";
 
 const USAGE = `moonrush-cli market <sub> [options]
 
@@ -27,10 +28,18 @@ export async function runMarket(
       // ONE call for every tab. The board is assembled server-side and edge-cached for 30
       // seconds, so asking per tab would be four requests for one answer that was built
       // together and must stay consistent with itself.
-      print(
-        await api(`/proxy/trendingTokensV2${q}`, { method: "POST" }),
-        flags,
+      // EVERY tab, because every one of them carries attacker-written metadata and a board
+      // is the widest surface the CLI has: one hostile token anywhere in a hundred rows.
+      const board = await api<Record<string, { tokens?: unknown[] }>>(
+        `/proxy/trendingTokensV2${q}`,
+        { method: "POST" },
       );
+      for (const slot of Object.values(board ?? {})) {
+        if (slot && Array.isArray(slot.tokens)) {
+          slot.tokens = sanitizeRows(slot.tokens);
+        }
+      }
+      print(board, flags);
       return 0;
     }
 

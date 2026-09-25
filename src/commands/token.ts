@@ -1,5 +1,6 @@
 import { api } from "../lib/api.js";
 import { print } from "../index.js";
+import { sanitizeTokenRow } from "../lib/sanitize.js";
 
 const USAGE = `moonrush-cli token <sub> [options]
 
@@ -32,11 +33,15 @@ export async function runToken(
       // POST, not GET, and the address goes in the BODY. `/proxy/*` mirrors Codex's own
       // shape rather than inventing a REST one, and it answers in the `{success,
       // responseObject}` envelope the client already unwraps.
+      // CLEANED BEFORE IT IS PRINTED. Name, symbol and description are written by whoever
+      // deployed the token and go straight into the reader's context. See lib/sanitize.
       print(
-        await api("/proxy/tokenDetails", {
-          method: "POST",
-          body: { address, networkId },
-        }),
+        sanitizeTokenRow(
+          await api("/proxy/tokenDetails", {
+            method: "POST",
+            body: { address, networkId },
+          }),
+        ),
         flags,
       );
       return 0;
