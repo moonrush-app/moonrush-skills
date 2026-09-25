@@ -1,0 +1,19 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "moonrush-cli",
+  "description": "Moonrush skills for AI coding assistants — token lookup and the Verified roster, discovery boards across Solana / Robinhood / Base / BNB / Soneium / Arc, and the live fee and platform-wallet config",
+  "owner": { "name": "Moonrush" },
+  "plugins": [
+    {
+      "name": "moonrush-cli",
+      "source": "./",
+      "description": "2 Moonrush skills — token detail and Verified roster, discovery boards and live config",
+      "version": "0.1.0",
+      "author": { "name": "Moonrush" },
+      "homepage": "https://moonrush.space",
+      "repository": "https://github.com/moonrush/moonrush-skills",
+      "license": "MIT",
+      "keywords": ["moonrush", "crypto", "solana", "soneium", "token", "defi", "skills"]
+    }
+  ]
+}

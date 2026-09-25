@@ -1,0 +1,27 @@
+{
+  "name": "moonrush-cli",
+  "version": "0.1.0",
+  "description": "Moonrush API from the command line — tokens, positions, rewards, and the admin ledger",
+  "type": "module",
+  "bin": {
+    "moonrush-cli": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "skills",
+    ".claude-plugin"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "bun test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "typescript": "^5.9.3"
+  }
+}
