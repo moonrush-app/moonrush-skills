@@ -34,7 +34,20 @@ jobs:
 
       - run: npm run build
 
-      - run: npm test
+      # `bun test <dir>` EXITS 0 WHEN IT FINDS NO TESTS. So a green step here proves the
+      # suite did not fail, not that it ran: a bad path, a renamed directory or a build
+      # that dropped the test files all look exactly like success. The floor is what turns
+      # this step back into evidence.
+      - name: Test
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee /tmp/test.out
+          ran=$(grep -oE 'Ran [0-9]+ tests' /tmp/test.out | grep -oE '[0-9]+' | tail -1)
+          if [ -z "$ran" ] || [ "$ran" -lt 40 ]; then
+            echo "Expected at least 40 tests to run, saw: ${ran:-none}"
+            exit 1
+          fi
+          echo "$ran tests ran"
 
       # The thing most likely to be wrong and least likely to be noticed: `files` in
       # package.json decides what a user actually installs, and a missing entry only shows
