@@ -14,13 +14,18 @@ const HOW_TO = `Moonrush authenticates with Privy. The CLI keeps a Privy SESSION
 token: given a refresh token it mints new access tokens itself, so it keeps working for as
 long as the session lives rather than for the hour an access token lasts.
 
-To set it up, from a signed-in browser at https://app.moonrush.space:
+Open this in a browser where you are signed in:
 
-  1. DevTools, Network tab, find the POST to auth.privy.io/api/v1/sessions
-  2. From its RESPONSE copy \`privy_access_token\` and \`refresh_token\`
-  3. From its REQUEST HEADERS copy \`privy-app-id\` and \`privy-client-id\`
+  https://app.moonrush.space/cli
 
-Then:
+It shows the whole \`config --apply\` command with a copy button. Paste it here.
+
+⚠️ That page displays a LONG-LIVED credential. Do not screen share it, and do not paste
+the command anywhere but your own terminal.
+
+If you would rather read the values yourself, they are in the POST to
+auth.privy.io/api/v1/sessions: \`privy_access_token\` and \`refresh_token\` in the
+response, \`privy-app-id\` and \`privy-client-id\` in the request headers.
 
   moonrush-cli config --apply <ACCESS_TOKEN> \\
     --refresh <REFRESH_TOKEN> --app-id <APP_ID> --client-id <CLIENT_ID>
@@ -28,9 +33,7 @@ Then:
 Stored at ~/.config/moonrush/.env, mode 600.
 
 The access token alone also works, and gives you about an hour before commands start
-answering 401. The refresh token is what removes that.
-
-⚠️ The refresh token is the LONG-LIVED credential. Treat that file as a secret.`;
+answering 401. The refresh token is what removes that.`;
 
 export async function runConfig(
   flags: Record<string, string | true>,

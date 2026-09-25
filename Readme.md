@@ -53,15 +53,18 @@ Every command prints JSON on stdout and takes `--raw` for one line. Full referen
 
 ## Auth
 
-Moonrush uses Privy. There is no API key: copy the tokens once from a signed-in browser,
-and the CLI renews the session itself from then on.
+Moonrush uses Privy. There is no API key: take the session once from a signed-in browser,
+and the CLI renews it itself from then on.
+
+Open **https://app.moonrush.space/cli** while signed in. It prints the whole command with
+a copy button:
 
 ```bash
 moonrush-cli config --apply <ACCESS_TOKEN> \
   --refresh <REFRESH_TOKEN> --app-id <APP_ID> --client-id <CLIENT_ID>
 ```
 
-`moonrush-cli config` prints where to find each value. Stored at `~/.config/moonrush/.env`,
+⚠️ That page shows a long-lived credential. Do not screen share it. Stored at `~/.config/moonrush/.env`,
 mode 600. Environment variables override the file.
 
 An access token alone works for about an hour. The refresh token is what removes that, and

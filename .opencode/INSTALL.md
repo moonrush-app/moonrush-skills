@@ -53,7 +53,8 @@ OpenCode discovers skills natively. Clone, symlink, configure.
    moonrush-cli config
    ```
 
-   It prints where to find each value in a signed-in browser, then you apply them:
+   It points you at https://app.moonrush.space/cli, which prints the whole command with
+   a copy button while you are signed in:
 
    ```bash
    moonrush-cli config --apply <ACCESS_TOKEN> \

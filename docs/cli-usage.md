@@ -12,8 +12,8 @@ moonrush-cli config --apply <ACCESS_TOKEN> \
   --refresh <REFRESH_TOKEN> --app-id <APP_ID> --client-id <CLIENT_ID>
 ```
 
-There is no API key. Moonrush authenticates with Privy, so the four values above come out
-of a signed-in browser once. With the refresh token the CLI calls
+There is no API key. Moonrush authenticates with Privy, so the session comes out of a
+signed-in browser once: open https://app.moonrush.space/cli and copy the command it prints. With the refresh token the CLI calls
 `POST auth.privy.io/api/v1/sessions` itself and mints new access tokens for as long as the
 session lives. Without it you have about an hour.
 
