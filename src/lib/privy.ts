@@ -118,30 +118,45 @@ export async function refreshPrivySession(
   }
 
   /**
-   * ⚠️ ONLY `privy_access_token`. NOT `token`, WHICH LOOKS RIGHT AND IS NOT.
+   * ⚠️ CHECK THE AUDIENCE, NOT THE FIELD NAME.
    *
-   * I fell for this once and made things worse, so the reason is written down. A refresh
-   * answers with both, and they have DIFFERENT AUDIENCES:
+   * Privy's refresh answers with two token fields and moves its PAT between them. Measured
+   * on the same session an hour apart:
    *
-   *   privy_access_token   aud = <appId>              what our API verifies
-   *   token                aud = https://auth.privy.io, att = "pat"
+   *   valid app token as Bearer    privy_access_token: null   token: <PAT>
+   *   expired app token as Bearer  privy_access_token: <PAT>  token: null
    *
-   * The second is Privy's own PAT, for Privy's own API. Reading it as a fallback when
-   * `privy_access_token` came back null did not rescue a refresh: it overwrote a merely
-   * EXPIRED app token with one our backend will reject forever, turning a session that
-   * needed renewing into a session that could not be used at all.
+   * So reading the documented field name is not a check. Both times the only JWT on offer
+   * had `aud: https://auth.privy.io, att: "pat"`, which is Privy's token for Privy's own
+   * API, and our backend rejects it. Storing one replaced a merely EXPIRED app token with
+   * one that can never work, twice, by two different routes.
    *
-   * So a null here means Privy issued no new app token, and that is a fact to report, not
-   * a gap to fill from the nearest field that also contains a JWT.
+   * The app token is the one whose audience is this app. That is true whatever field it
+   * arrives in and whatever Privy changes next, so that is what is tested.
    */
-  const accessToken =
-    typeof body.privy_access_token === "string" && body.privy_access_token
-      ? body.privy_access_token
-      : null;
+  const audienceOf = (jwt: unknown): string | null => {
+    if (typeof jwt !== "string") return null;
+    try {
+      const claims = JSON.parse(
+        Buffer.from(jwt.split(".")[1] ?? "", "base64url").toString(),
+      ) as { aud?: unknown };
+      return typeof claims.aud === "string" ? claims.aud : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const accessToken = [body.privy_access_token, body.token].find(
+    (candidate) => audienceOf(candidate) === p.appId,
+  ) as string | undefined;
+
   if (!accessToken) {
+    const seen = [body.privy_access_token, body.token]
+      .map((c) => audienceOf(c) ?? "none")
+      .join(", ");
     throw new Error(
-      `Privy issued no new access token (session_update_action: ${action}). ` +
-        `The stored one is unchanged.`,
+      `Privy issued no token for this app (session_update_action: ${action}; ` +
+        `audiences offered: ${seen}). The stored one is unchanged.`,
     );
   }
 

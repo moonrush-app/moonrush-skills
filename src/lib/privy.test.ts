@@ -1,6 +1,14 @@
 import { describe, expect, test, afterEach } from "bun:test";
 import { PrivyAuthExpired, refreshPrivySession } from "./privy";
 
+
+/** A JWT with only the claims this code reads. Signature is never checked here. */
+function jwtFor(aud: string, att?: string): string {
+  const b64 = (o: unknown) =>
+    Buffer.from(JSON.stringify(o)).toString("base64url");
+  return `${b64({ alg: "ES256" })}.${b64(att ? { aud, att } : { aud })}.sig`;
+}
+
 const realFetch = globalThis.fetch;
 afterEach(() => {
   globalThis.fetch = realFetch;
@@ -24,11 +32,11 @@ describe("session_update_action", () => {
   test("`set` replaces BOTH tokens", () => {
     answers(200, {
       session_update_action: "set",
-      privy_access_token: "access-new",
+      privy_access_token: jwtFor("app"),
       refresh_token: "refresh-2",
     });
     return call().then((s) => {
-      expect(s.accessToken).toBe("access-new");
+      expect(s.accessToken).toBe(jwtFor("app"));
       expect(s.refreshToken).toBe("refresh-2");
     });
   });
@@ -41,10 +49,10 @@ describe("session_update_action", () => {
     // like "refresh does not work".
     answers(200, {
       session_update_action: "ignore",
-      privy_access_token: "access-new",
+      privy_access_token: jwtFor("app"),
     });
     return call().then((s) => {
-      expect(s.accessToken).toBe("access-new");
+      expect(s.accessToken).toBe(jwtFor("app"));
       expect(s.refreshToken).toBeNull();
       expect(s.updateAction).toBe("ignore");
     });
@@ -56,7 +64,7 @@ describe("session_update_action", () => {
     // would mask the case above if the behaviour changed.
     answers(200, {
       session_update_action: "ignore",
-      privy_access_token: "access-new",
+      privy_access_token: jwtFor("app"),
       refresh_token: "refresh-echoed",
     });
     return call().then((s) => expect(s.refreshToken).toBeNull());
@@ -65,7 +73,7 @@ describe("session_update_action", () => {
   test("`clear` is the end of the session, not a retry", () => {
     answers(200, {
       session_update_action: "clear",
-      privy_access_token: "irrelevant",
+      privy_access_token: jwtFor("app"),
     });
     return call().then(
       () => {
@@ -102,13 +110,13 @@ describe("failures", () => {
     );
   });
 
-  test("a 200 with no access token is a failure, not a silent empty session", () => {
+  test("a 200 with no token for this app is a failure, not a silent empty session", () => {
     answers(200, { session_update_action: "set" });
     return call().then(
       () => {
         throw new Error("should have thrown");
       },
-      (e) => expect(String(e.message)).toContain("no access token"),
+      (e) => expect(String(e.message)).toContain("no token for this app"),
     );
   });
 });
@@ -121,7 +129,7 @@ describe("the request", () => {
       return new Response(
         JSON.stringify({
           session_update_action: "set",
-          privy_access_token: "a",
+          privy_access_token: jwtFor("app"),
           refresh_token: "r",
         }),
         { status: 200 },
@@ -151,35 +159,35 @@ describe("what the live endpoint actually returns", () => {
     answers(200, {
       session_update_action: "ignore",
       privy_access_token: null,
-      token: "access-from-token-field",
+      token: jwtFor("app"),
       refresh_token: "echoed",
     });
     const s = await call();
-    expect(s.accessToken).toBe("access-from-token-field");
+    expect(s.accessToken).toBe(jwtFor("app"));
     expect(s.refreshToken).toBeNull();
   });
 
   test("the documented name still wins when both are present", async () => {
     answers(200, {
       session_update_action: "set",
-      privy_access_token: "documented",
+      privy_access_token: jwtFor("app"),
       token: "other",
       refresh_token: "r",
     });
-    expect((await call()).accessToken).toBe("documented");
+    expect((await call()).accessToken).toBe(jwtFor("app"));
   });
 
-  test("neither key present names the action and the keys it did get", async () => {
-    // A bare "no access token" sent me looking at the request for an hour. The response is
-    // what disagreed, so the response is what the message has to describe.
+  test("neither field carries an app token, and the message says what did arrive", async () => {
+    // A bare "no access token" sent me reading the REQUEST for an hour. What disagreed was
+    // the response, so the response is what the message describes.
     answers(200, { session_update_action: "set", user: {} });
     try {
       await call();
       throw new Error("should have thrown");
     } catch (e) {
       const m = String((e as Error).message);
-      expect(m).toContain("action: set");
-      expect(m).toContain("user");
+      expect(m).toContain("session_update_action: set");
+      expect(m).toContain("audiences offered: none, none");
     }
   });
 
@@ -223,5 +231,49 @@ describe("whose fault the 401 is", () => {
   test("the same answer IS terminal once we did send one", async () => {
     answers(401, { error: "Invalid token", code: "missing_or_invalid_token" });
     await expect(call()).rejects.toBeInstanceOf(PrivyAuthExpired);
+  });
+});
+
+
+describe("the audience decides, not the field name", () => {
+  const APP = jwtFor("app");
+  const PAT = jwtFor("https://auth.privy.io", "pat");
+
+  test("a PAT in privy_access_token is refused", async () => {
+    // MEASURED. With an EXPIRED app token as Bearer, Privy put its PAT in the documented
+    // field and left `token` null. Reading the field name would have stored it.
+    answers(200, { session_update_action: "ignore", privy_access_token: PAT, token: null });
+    try {
+      await call();
+      throw new Error("should have thrown");
+    } catch (e) {
+      expect(String((e as Error).message)).toContain("auth.privy.io");
+      expect(String((e as Error).message)).toContain("unchanged");
+    }
+  });
+
+  test("a PAT in token is refused too", async () => {
+    // The same session an hour earlier, with a VALID app token as Bearer, put the PAT in
+    // the other field. Privy moves it; the audience does not move.
+    answers(200, { session_update_action: "ignore", privy_access_token: null, token: PAT });
+    await expect(call()).rejects.toThrow("auth.privy.io");
+  });
+
+  test("an app-audience token is taken from EITHER field", async () => {
+    answers(200, { session_update_action: "set", privy_access_token: APP, refresh_token: "r" });
+    expect((await call()).accessToken).toBe(APP);
+    answers(200, { session_update_action: "set", privy_access_token: null, token: APP, refresh_token: "r" });
+    expect((await call()).accessToken).toBe(APP);
+  });
+
+  test("the message names the audiences it was offered", async () => {
+    // A bare "no access token" sent me reading the request for an hour. What disagreed was
+    // the response, so the response is what the message describes.
+    answers(200, { session_update_action: "ignore", privy_access_token: PAT, token: null });
+    try {
+      await call();
+    } catch (e) {
+      expect(String((e as Error).message)).toContain("audiences offered");
+    }
   });
 });
