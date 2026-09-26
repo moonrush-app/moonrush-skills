@@ -59,7 +59,7 @@ Two credentials, and they are for different machines.
 Needs a browser on the same machine, so it is not an option on a server or in CI.
 
 **API key.** `moonrush-cli config --generate-key`, paste the PUBLIC key at
-https://ai.moonrush.space/keys, then `moonrush-cli config --apply-key <key>`. No browser,
+https://app.moonrush.space/ai/keys, then `moonrush-cli config --apply-key <key>`. No browser,
 no expiry. When one is configured it is used instead of the session, and every request is
 signed with the local private key.
 

@@ -58,7 +58,7 @@ export async function runConfig(
     process.stdout.write(
       `Private key written to ${privateKeyPath} (mode 600).\n` +
         `It never leaves this machine. Do not copy it anywhere.\n\n` +
-        `Paste THIS at https://ai.moonrush.space/keys:\n\n` +
+        `Paste THIS at https://app.moonrush.space/ai/keys:\n\n` +
         publicKeyPem +
         `\nThen apply the key it gives you back:\n\n` +
         `  moonrush-cli config --apply-key <key id>.<secret>\n`,

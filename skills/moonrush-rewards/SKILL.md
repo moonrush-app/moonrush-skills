@@ -11,7 +11,7 @@ there are no working credentials: show the user the two ways to get some and sto
 
   - `moonrush-cli login` opens a browser. Fastest, but needs one on this machine, and the
     session lasts about an hour.
-  - An API key from https://ai.moonrush.space/keys does not need a browser and does not
+  - An API key from https://app.moonrush.space/ai/keys does not need a browser and does not
     expire, which is the only option on a server or in CI. Run
     `moonrush-cli config --generate-key`, paste the PUBLIC key it prints into that page,
     then `moonrush-cli config --apply-key <key>`.

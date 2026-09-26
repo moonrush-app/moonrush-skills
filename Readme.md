@@ -67,7 +67,7 @@ One click. The session lasts about an hour and renews itself while it lives.
 
 ```bash
 moonrush-cli config --generate-key     # keypair, private half stays here at mode 600
-# paste the PUBLIC key at https://ai.moonrush.space/keys
+# paste the PUBLIC key at https://app.moonrush.space/ai/keys
 moonrush-cli config --apply-key <key id>.<secret>
 ```
 

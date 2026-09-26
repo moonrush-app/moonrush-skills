@@ -47,7 +47,7 @@ export interface Config {
   adminBase: string;
 
   /**
-   * An API key, as `<key id>.<secret>`, from https://ai.moonrush.space/keys.
+   * An API key, as `<key id>.<secret>`, from https://app.moonrush.space/ai/keys.
    *
    * ⚠️ AN ALTERNATIVE TO THE PRIVY SESSION, NOT AN ADDITION. When this is set the client
    * talks to the gateway instead, which does not need a browser and does not expire in an
