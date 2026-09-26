@@ -73,7 +73,7 @@ export async function runConfig(
         `Saved to ${CONFIG_FILE}\n` +
           `Verified as ${me.username ? "@" + me.username : (me.userId ?? "an account")}\n` +
           (renewable
-            ? "A refresh token is stored; the CLI will try to renew when this expires.\n"
+            ? "Session renews itself; no need to sign in again while it lives.\n"
             : "⚠️ No refresh token stored. This will stop working in about an hour.\n" +
               "   Re-run with --refresh, --app-id and --client-id to keep it alive.\n"),
       );

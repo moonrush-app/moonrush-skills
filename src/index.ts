@@ -112,9 +112,7 @@ main()
           ? "401. Privy ended this session.\n" +
               "Sign in again: moonrush-cli login\n"
           : "401. The session is not usable.\n" +
-              "Sign in again: moonrush-cli login\n\n" +
-              "An access token lasts about an hour. The CLI tries to renew it, and\n" +
-              "cannot always: Privy only issues a replacement when it decides to.\n",
+              "Sign in again: moonrush-cli login\n",
       );
       return exit(1);
     }
