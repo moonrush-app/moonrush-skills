@@ -1,5 +1,7 @@
 import { loadConfig, saveConfig } from "./config.js";
 import { PrivyAuthExpired, refreshPrivySession } from "./privy.js";
+import { loadPrivateKey } from "./keypair.js";
+import { signRequest } from "./sign.js";
 
 /**
  * One HTTP client for an API that answers in TWO envelopes.
@@ -68,12 +70,101 @@ export async function api<T>(path: string, opts: Options = {}): Promise<T> {
   return request<T>(path, opts, true);
 }
 
+/**
+ * The API-key path: through the gateway, with a signature when we have a key to sign with.
+ *
+ * ⚠️ SIGNED WHENEVER POSSIBLE, NOT ONLY WHEN REQUIRED. The gateway decides which endpoints
+ * need a signature, and that table lives on the server. Mirroring it here would be a second
+ * copy of a security policy, drifting quietly, and a client that guessed "this one does not
+ * need signing" would be refused with a message about signatures for a call it thought was
+ * public. Signing everything is never wrong: the gateway ignores a signature it did not
+ * ask for.
+ *
+ * With no private key on disk, reads still work and anything private fails with the
+ * gateway's own message, which names the missing piece.
+ */
+async function requestWithApiKey<T>(path: string, opts: Options): Promise<T> {
+  const cfg = loadConfig();
+  const url = new URL(path, cfg.gatewayBase);
+  const body = opts.body ? JSON.stringify(opts.body) : "";
+
+  const headers: Record<string, string> = {
+    "x-apikey": cfg.apiKey!,
+    ...(opts.body ? { "content-type": "application/json" } : {}),
+  };
+
+  const privateKey = loadPrivateKey();
+  if (privateKey) {
+    const signed = signRequest({
+      path: url.pathname,
+      query: url.searchParams,
+      body,
+      privateKeyPem: privateKey,
+    });
+    // Set AFTER signing and from the returned values, because they are part of what was
+    // signed. Generating a second timestamp here would sign one request and send another.
+    url.searchParams.set("timestamp", String(signed.timestamp));
+    url.searchParams.set("client_id", signed.clientId);
+    headers["x-signature"] = signed.signature;
+  }
+
+  const res = await fetch(url.toString(), {
+    method: opts.method ?? "GET",
+    headers,
+    body: body || undefined,
+  });
+
+  const text = await res.text();
+  let parsed: unknown;
+  try {
+    parsed = text ? JSON.parse(text) : null;
+  } catch {
+    throw new ApiError(
+      `${res.status} and the body was not JSON: ${text.slice(0, 200)}`,
+      res.status,
+    );
+  }
+
+  const envelope = parsed as {
+    ok?: boolean;
+    data?: unknown;
+    success?: boolean;
+    responseObject?: unknown;
+    error?: unknown;
+  } | null;
+
+  if (!res.ok || envelope?.ok === false || envelope?.success === false) {
+    const err = envelope?.error;
+    const message =
+      typeof err === "string"
+        ? err
+        : ((err as { message?: string })?.message ?? `HTTP ${res.status}`);
+    throw new ApiError(
+      message,
+      res.status,
+      typeof err === "object" ? (err as { code?: string })?.code : undefined,
+    );
+  }
+
+  if (envelope && "responseObject" in envelope) return envelope.responseObject as T;
+  if (envelope && "data" in envelope) return envelope.data as T;
+  return envelope as T;
+}
+
 async function request<T>(
   path: string,
   opts: Options,
   mayRefresh: boolean,
 ): Promise<T> {
   const cfg = loadConfig();
+
+  // AN API KEY WINS when one is configured, and the admin routes are the exception: the
+  // gateway fronts the app API only, so pointing an admin call at it would 404 in a way
+  // that reads like the command being wrong.
+  if (cfg.apiKey && !opts.admin && !opts.anonymous) {
+    return requestWithApiKey<T>(path, opts);
+  }
+
   const base = opts.admin ? cfg.adminBase : cfg.apiBase;
 
   if (!opts.anonymous && !cfg.token) {

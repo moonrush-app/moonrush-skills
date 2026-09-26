@@ -1,6 +1,7 @@
 import { CONFIG_FILE, loadConfig, saveConfig } from "../lib/config.js";
 import { api, ApiError } from "../lib/api.js";
 import { checkFlags } from "../lib/validate.js";
+import { generateKeypair, loadPrivateKey, PRIVATE_KEY_PATH } from "../lib/keypair.js";
 
 /**
  * How somebody gets a token, written where they will be when they need it.
@@ -39,7 +40,69 @@ answering 401. The refresh token is what removes that.`;
 export async function runConfig(
   flags: Record<string, string | true>,
 ): Promise<number> {
-  checkFlags(flags, ["apply", "refresh", "app-id", "client-id", "origin", "check"], "config");
+  checkFlags(
+    flags,
+    ["apply", "refresh", "app-id", "client-id", "origin", "check", "generate-key", "force", "apply-key"],
+    "config",
+  );
+
+  /**
+   * Make a signing keypair and print the half that leaves this machine.
+   *
+   * ⚠️ ONLY THE PUBLIC HALF IS PRINTED, and saying so where somebody is about to copy
+   * something is the point. The private key is written to disk at mode 600 and is never
+   * shown, never uploaded, and never needed by anyone but this CLI.
+   */
+  if (flags["generate-key"]) {
+    const { privateKeyPath, publicKeyPem } = generateKeypair(flags.force === true);
+    process.stdout.write(
+      `Private key written to ${privateKeyPath} (mode 600).\n` +
+        `It never leaves this machine. Do not copy it anywhere.\n\n` +
+        `Paste THIS at https://ai.moonrush.space/keys:\n\n` +
+        publicKeyPem +
+        `\nThen apply the key it gives you back:\n\n` +
+        `  moonrush-cli config --apply-key <key id>.<secret>\n`,
+    );
+    return 0;
+  }
+
+  const applyKey = flags["apply-key"];
+  if (typeof applyKey === "string") {
+    const key = applyKey.trim();
+    if (!/^[a-f0-9]{32}\.[A-Za-z0-9_-]{20,}$/.test(key)) {
+      process.stderr.write(
+        "That does not look like an API key. It is `<key id>.<secret>`, exactly as the\n" +
+          "console printed it, and the console shows it only once.\n",
+      );
+      return 1;
+    }
+    saveConfig({ MOONRUSH_API_KEY: key });
+
+    // Said now rather than at the first failed call. A key with trade scope and no signing
+    // key answers "must be signed" on every private endpoint, which reads as a server
+    // problem if nobody mentioned the pair.
+    const signing = loadPrivateKey()
+      ? `Signing key found at ${PRIVATE_KEY_PATH}.\n`
+      : `⚠️ No signing key at ${PRIVATE_KEY_PATH}. Public market data will work; anything\n` +
+        `   private will not. Run: moonrush-cli config --generate-key\n`;
+
+    try {
+      const me = await api<{ username?: string; userId?: string }>("/users");
+      process.stdout.write(
+        `Saved to ${CONFIG_FILE}\n` +
+          `Verified as ${me.username ? "@" + me.username : (me.userId ?? "an account")}\n` +
+          signing,
+      );
+      return 0;
+    } catch (e) {
+      process.stderr.write(
+        `Saved to ${CONFIG_FILE}, but the key did not work: ${
+          e instanceof Error ? e.message : String(e)
+        }\n` + signing,
+      );
+      return 1;
+    }
+  }
 
   const apply = flags.apply;
   if (typeof apply === "string") {
@@ -109,6 +172,9 @@ export async function runConfig(
       `  api      ${cfg.apiBase}\n` +
       `  admin    ${cfg.adminBase}\n` +
       `  origin   ${cfg.privyOrigin}\n` +
+      `  gateway  ${cfg.gatewayBase}\n` +
+      `  api key  ${cfg.apiKey ? `set (${cfg.apiKey.split(".")[0]}…)` : "not set"}\n` +
+      `  signing  ${loadPrivateKey() ? PRIVATE_KEY_PATH : "no key generated"}\n` +
       `  token    ${cfg.token ? `set (${cfg.token.slice(0, 12)}…)` : "NOT SET"}\n` +
       // Three states, not two. With no token at all there is nothing to expire, and
       // saying "expires in about an hour" about it sends the reader looking for a token

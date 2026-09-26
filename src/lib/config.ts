@@ -45,10 +45,24 @@ export interface Config {
   apiBase: string;
   /** The admin console origin, for the admin-only commands. */
   adminBase: string;
+
+  /**
+   * An API key, as `<key id>.<secret>`, from https://ai.moonrush.space/keys.
+   *
+   * ⚠️ AN ALTERNATIVE TO THE PRIVY SESSION, NOT AN ADDITION. When this is set the client
+   * talks to the gateway instead, which does not need a browser and does not expire in an
+   * hour. That is the whole reason it exists: `login` needs a browser on the same machine,
+   * which rules out CI and a server with no display.
+   */
+  apiKey?: string;
+
+  /** Where the gateway lives. Overridable so a developer can point at a preview. */
+  gatewayBase: string;
 }
 
 const DEFAULTS = {
   apiBase: "https://social.moonrush.space",
+  gatewayBase: "https://moonrush-ai-api.contact-9ba.workers.dev",
   adminBase: "https://moonrush-admin.contact-9ba.workers.dev",
   /**
    * ⚠️ MUST MATCH WHERE THE TOKENS CAME FROM. Privy checks it against the app's allowlist
@@ -91,6 +105,8 @@ export function loadConfig(): Config {
   const pick = (key: string) => process.env[key] ?? fromFile[key];
   return {
     token: pick("MOONRUSH_TOKEN"),
+    apiKey: pick("MOONRUSH_API_KEY"),
+    gatewayBase: pick("MOONRUSH_GATEWAY_BASE") ?? DEFAULTS.gatewayBase,
     refreshToken: pick("MOONRUSH_REFRESH_TOKEN"),
     privyAppId: pick("MOONRUSH_PRIVY_APP_ID"),
     privyClientId: pick("MOONRUSH_PRIVY_CLIENT_ID"),
