@@ -86,14 +86,19 @@ export async function runConfig(
       : `⚠️ No signing key at ${PRIVATE_KEY_PATH}. Public market data will work; anything\n` +
         `   private will not. Run: moonrush-cli config --generate-key\n`;
 
+    /**
+     * ⚠️ VERIFY WITH A READ ENDPOINT, NOT `/users`.
+     *
+     * This checked `/users` first, and `/users` is in the `trade` tier. So a perfectly good
+     * read-only key, which is the kind the console makes by default, reported "the key did
+     * not work" every single time. The key worked; the check was asking it to do something
+     * it was never granted.
+     *
+     * `/config` needs only `read`, so it proves the thing actually in question: that the
+     * gateway found this key, matched its secret and accepted it.
+     */
     try {
-      const me = await api<{ username?: string; userId?: string }>("/users");
-      process.stdout.write(
-        `Saved to ${CONFIG_FILE}\n` +
-          `Verified as ${me.username ? "@" + me.username : (me.userId ?? "an account")}\n` +
-          signing,
-      );
-      return 0;
+      await api("/config");
     } catch (e) {
       process.stderr.write(
         `Saved to ${CONFIG_FILE}, but the key did not work: ${
@@ -102,6 +107,23 @@ export async function runConfig(
       );
       return 1;
     }
+
+    // Now a SEPARATE question, reported rather than judged: does this key also hold
+    // `trade`? A refusal here is information about the key, not a failure of it.
+    let tier = "read only. Public market data.";
+    try {
+      const me = await api<{ username?: string; userId?: string }>("/users");
+      tier =
+        `read + trade, as ${me.username ? "@" + me.username : (me.userId ?? "your account")}.\n` +
+        `   This key can move money. Treat it like one.`;
+    } catch {
+      /* Expected for a read key, and not an error. */
+    }
+
+    process.stdout.write(
+      `Saved to ${CONFIG_FILE}\n` + `Key works, ${tier}\n` + signing,
+    );
+    return 0;
   }
 
   const apply = flags.apply;
