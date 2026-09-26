@@ -6,20 +6,50 @@ on one line, which is what you want when piping into `jq`.
 ## Setup
 
 ```bash
-moonrush-cli config                 # how to get credentials, and what is configured now
-moonrush-cli config --check         # exit 0 if a working token is configured, else 1
-moonrush-cli config --apply <ACCESS_TOKEN> \
-  --refresh <REFRESH_TOKEN> --app-id <APP_ID> --client-id <CLIENT_ID> \
-  --origin https://app.moonrush.space
+moonrush-cli config --check     # exit 0 if anything works, else 1
+moonrush-cli config             # what is configured now
 ```
 
-There is no API key. Moonrush authenticates with Privy, so the session comes out of a
-signed-in browser once: open https://app.moonrush.space/cli and copy the command it prints. With the refresh token the CLI calls
-`POST auth.privy.io/api/v1/sessions` itself and mints new access tokens for as long as the
-session lives. Without it you have about an hour.
+**Browser sign-in.** Needs a browser on this machine; the session lasts about an hour.
 
-Stored at `~/.config/moonrush/.env`, mode 600. Environment variables win over the file, so
-`MOONRUSH_TOKEN=... moonrush-cli ...` needs no file and leaves nothing behind.
+```bash
+moonrush-cli login
+```
+
+**API key.** No browser, no expiry. The only option on a server or in CI.
+
+```bash
+moonrush-cli config --generate-key
+# paste the PUBLIC key at https://ai.moonrush.space/keys
+moonrush-cli config --apply-key <key id>.<secret>
+```
+
+The private key is written to `~/.config/moonrush/signing-key.pem` at mode 600 and is never
+transmitted. `--generate-key` refuses to overwrite one: replacing it breaks every API key
+registered with it while the console still lists them as live.
+
+When an API key is configured it is used instead of the browser session, and every request
+is signed with that key.
+
+### Tiers
+
+| Tier | Reaches | Needs |
+|---|---|---|
+| `read` | `token`, `market`, `positions list/top/stats`, `leaderboard` boards | the key id |
+| `trade` | `wallet`, `positions me`, `rewards`, `leaderboard rank` | the tier enabled, plus a signature |
+
+A 403 naming a scope means the key works and was not granted that tier. Enable it in the
+console; do not re-authenticate.
+
+### Errors you will meet
+
+| Code | What it means |
+|---|---|
+| `SIGNATURE_REQUIRED` | The endpoint is in the `trade` tier and no signing key was found. |
+| `CLOCK_SKEW` | This machine's clock is more than 5 seconds off. Not a key problem. |
+| `REPLAY` | The same signed request was sent twice. |
+| `BAD_SIGNATURE` | The request changed after it was signed. |
+| `RATE_LIMIT_EXCEEDED` | Over the key's per-minute budget. `x-ratelimit-reset` says when. |
 
 ## Chains
 

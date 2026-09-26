@@ -173,13 +173,24 @@ export async function runConfig(
     }
   }
 
-  // `--check` exists for the SKILL, not for a person: an agent runs it first and branches
-  // on the exit code rather than parsing prose.
+  /**
+   * `--check` exists for the SKILL, not for a person: an agent runs it first and branches
+   * on the exit code rather than parsing prose.
+   *
+   * ⚠️ CHECKED WITH `/config`, NOT `/users`. `/users` is in the `trade` tier, so a
+   * read-only API key answers 403 to it, this returned 1, and every skill would then tell
+   * the user their credentials were broken. They were not. The check was asking a
+   * perfectly good key to do something it was never granted, which is the same mistake
+   * `--apply-key` made.
+   *
+   * `/config` is the one endpoint every credential can reach, so it answers the question
+   * actually being asked: can this CLI talk to the API as somebody.
+   */
   if (flags.check) {
     const cfg = loadConfig();
-    if (!cfg.token) return 1;
+    if (!cfg.token && !cfg.apiKey) return 1;
     try {
-      await api("/users");
+      await api("/config");
       process.stdout.write("ok\n");
       return 0;
     } catch (e) {

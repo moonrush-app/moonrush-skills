@@ -6,8 +6,22 @@ metadata:
   cliHelp: "moonrush-cli rewards --help"
 ---
 
-**BEFORE ANYTHING ELSE: run `moonrush-cli config --check`.** Exit 0, carry on. Exit 1, run
-`moonrush-cli config`, show the user its output, and stop.
+**BEFORE ANYTHING ELSE: run `moonrush-cli config --check`.** Exit 0, carry on. Exit 1,
+there are no working credentials: show the user the two ways to get some and stop.
+
+  - `moonrush-cli login` opens a browser. Fastest, but needs one on this machine, and the
+    session lasts about an hour.
+  - An API key from https://ai.moonrush.space/keys does not need a browser and does not
+    expire, which is the only option on a server or in CI. Run
+    `moonrush-cli config --generate-key`, paste the PUBLIC key it prints into that page,
+    then `moonrush-cli config --apply-key <key>`.
+
+If the command is not found, tell them to run `npm install -g moonrush-cli`.
+
+⚠️ **AN API KEY HAS TIERS, AND A 403 IS NOT A BROKEN KEY.** A key made without "Trading and
+private data" reaches public market data and nothing else. A refusal naming a scope means
+the key is fine and was not granted that tier: say so, and do not send anybody to
+re-authenticate. Turning the tier on is a toggle in the console.
 
 ## Sub-commands
 

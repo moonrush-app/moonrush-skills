@@ -53,20 +53,33 @@ erroring. And `/proxy/tokenDetails` takes its argument as a single `tokenId` str
 
 ## Prerequisites
 
-Config lookup order, environment first so a one-off needs no file:
+Two credentials, and they are for different machines.
 
-1. Environment variables: `MOONRUSH_TOKEN`, `MOONRUSH_REFRESH_TOKEN`,
-   `MOONRUSH_PRIVY_APP_ID`, `MOONRUSH_PRIVY_CLIENT_ID`
-2. `~/.config/moonrush/.env`, mode 600, written by `moonrush-cli config --apply`
+**Browser session.** `moonrush-cli login` opens a browser, one click, lasts about an hour.
+Needs a browser on the same machine, so it is not an option on a server or in CI.
 
-Run `moonrush-cli config` for how to obtain them. Moonrush authenticates with Privy: there
-is no API key and no device flow, so the credentials are copied from a signed-in browser
-once and then refreshed by the CLI itself.
+**API key.** `moonrush-cli config --generate-key`, paste the PUBLIC key at
+https://ai.moonrush.space/keys, then `moonrush-cli config --apply-key <key>`. No browser,
+no expiry. When one is configured it is used instead of the session, and every request is
+signed with the local private key.
 
-⚠️ `MOONRUSH_REFRESH_TOKEN` is the long-lived credential. The access token beside it lasts
-about an hour; the refresh token mints replacements for as long as the session lives.
-Never print either one, never paste one into a file in a project directory, and never put
-one in a URL.
+`moonrush-cli config --check` answers "is anything working" with an exit code, and it is
+what to run before anything else.
+
+⚠️ **THE PRIVATE KEY NEVER LEAVES THE MACHINE.** It sits at
+`~/.config/moonrush/signing-key.pem`, mode 600. Never read it, never print it, never put it
+in a request. The console stores only the public half by design.
+
+### Tiers, and why a 403 is not a broken key
+
+`read` is public market data and needs only the key id. `trade` is anything that is one
+person's, and needs the tier enabled plus a signature over path, query, body and timestamp.
+
+The split is NOT read versus write. `rewards me` and `wallet portfolio` are reads and both
+sit in `trade`, because what makes a call dangerous is whose data comes back, not the verb.
+
+A refusal naming a scope means the key works and was not granted that tier. Say so. Do not
+tell anybody to sign in again, and do not retry.
 
 ## The one command that moves money
 

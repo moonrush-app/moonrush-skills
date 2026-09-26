@@ -53,25 +53,38 @@ Every command prints JSON on stdout and takes `--raw` for one line. Full referen
 
 ## Auth
 
-Moonrush uses Privy. There is no API key: take the session once from a signed-in browser,
-and the CLI renews it itself from then on.
+Two ways in, and they are for different machines.
 
-Open **https://app.moonrush.space/cli** while signed in. It prints the whole command with
-a copy button:
+**A browser, for your laptop.**
 
 ```bash
-moonrush-cli config --apply <ACCESS_TOKEN> \
-  --refresh <REFRESH_TOKEN> --app-id <APP_ID> --client-id <CLIENT_ID> \
-  --origin https://app.moonrush.space
+moonrush-cli login
 ```
 
-⚠️ That page shows a long-lived credential. Do not screen share it. Stored at `~/.config/moonrush/.env`,
-mode 600. Environment variables override the file.
+One click. The session lasts about an hour and renews itself while it lives.
 
-An access token alone works for about an hour. The refresh token is what removes that, and
-it is the credential worth protecting.
+**An API key, for a server, CI, or an agent.** No browser, no expiry.
 
-`token verified`, `token check` and `market config` need no token at all.
+```bash
+moonrush-cli config --generate-key     # keypair, private half stays here at mode 600
+# paste the PUBLIC key at https://ai.moonrush.space/keys
+moonrush-cli config --apply-key <key id>.<secret>
+```
+
+⚠️ **The private key never leaves your machine and is never uploaded.** The console stores
+only the public half, so what the server holds can verify a signature and cannot make one.
+Nothing on that page should ever ask for a private key.
+
+**Keys have two tiers.** `read` is public market data and needs only the key id. Anything
+that is one person's, which is your wallet, positions, earnings and claiming them, needs
+"Trading and private data" enabled AND a signature over the path, query, body and
+timestamp of each request. So a leaked key id alone reads public boards and nothing else,
+and a captured request cannot be replayed or edited.
+
+The split is not read versus write: `rewards me` and `wallet portfolio` are reads and both
+sit in the higher tier, because what makes a call dangerous is whose data comes back.
+
+`token verified`, `token check` and `market config` need no credentials at all.
 
 ## Safety
 
