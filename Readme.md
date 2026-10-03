@@ -50,6 +50,10 @@ moonrush-cli trade buy --usd 25 --address <addr>                  # moves money
 moonrush-cli trade sell --percent 50 --address <addr> --networkId base   # moves money
 moonrush-cli orders create --kind sl --change -20 --percent 100 --address <addr>
 moonrush-cli orders list --status closed
+moonrush-cli feed posts --following --kinds comment
+moonrush-cli mooncall read --positionId <uuid>
+moonrush-cli mooncall post --positionId <uuid> --text "..."       # publishes
+moonrush-cli follow add --username miadang
 ```
 
 Chains, by id or name: `1399811149` / `solana` (default), `4663` / `robinhood`,

@@ -168,6 +168,19 @@ moonrush-cli orders cancel --id <uuid>
 
 `create` asks on a terminal: once armed, an order trades by itself.
 
+## feed, mooncall, follow
+
+```bash
+moonrush-cli feed posts [--following] [--kinds comment,repost,trade] [--networkId solana,base]
+moonrush-cli feed user --username <name>
+moonrush-cli mooncall read --positionId <uuid>
+moonrush-cli mooncall post --positionId <uuid> --text "..." [--parentId <uuid>]   # PUBLISHES
+moonrush-cli follow add|remove --username <name>
+moonrush-cli follow list [--followers] [--username <name>]
+```
+
+People's text (posts, bios, names) is cleaned of hidden characters before it is printed.
+
 ## Profiles
 
 `MOONRUSH_CONFIG_DIR=/path` keeps credentials somewhere other than `~/.config/moonrush`,

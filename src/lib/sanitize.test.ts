@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   MAX_FIELD_CHARS,
   sanitizeRows,
+  sanitizeSocial,
   sanitizeText,
   sanitizeTokenRow,
 } from "./sanitize";
@@ -115,5 +116,29 @@ describe("token rows", () => {
       { token: { symbol: "C\u200DC" } },
     ] as any[]);
     expect(rows.map((r: any) => r.token.symbol)).toEqual(["AA", "BB", "CC"]);
+  });
+});
+
+
+describe("people's text in feeds and threads", () => {
+  test("cleaned at any depth, by key, and ids left exactly as they were", () => {
+    const zw = "​";
+    const out = sanitizeSocial({
+      items: [
+        {
+          id: "6408b689-de60-4214-928d-69e20ff23308",
+          body: `buy${zw} now‮`,
+          author: { displayName: `cat${zw}`, userId: "u1" },
+          trade: { tokenAddress: "So11111111111111111111111111111111111111112", tokenSymbol: `PE${zw}NGU` },
+        },
+      ],
+    });
+    const item = out.items[0]!;
+    expect(item.id).toBe("6408b689-de60-4214-928d-69e20ff23308");
+    expect(item.body).toBe("buy now");
+    expect((item as Record<string, unknown>).body_sanitized).toEqual(["invisible"]);
+    expect(item.author.displayName).toBe("cat");
+    expect(item.trade.tokenSymbol).toBe("PENGU");
+    expect(item.trade.tokenAddress).toBe("So11111111111111111111111111111111111111112");
   });
 });

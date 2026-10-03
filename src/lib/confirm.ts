@@ -37,13 +37,15 @@ export class Refused extends Error {
 export async function confirm(
   question: string,
   flags: Record<string, unknown>,
+  /** What the command does, for the refusal: money, or a post under the user's name. */
+  action = "this moves money",
 ): Promise<void> {
   if (flags.yes === true || flags.yes === "true") return;
 
   if (!process.stdin.isTTY) {
     throw new Refused(
       `${question}\n\n` +
-        "Refused: this moves money and there is no terminal here to confirm on.\n" +
+        `Refused: ${action} and there is no terminal here to confirm on.\n` +
         "A person can re-run it with --yes.\n" +
         "An agent must ask its user first, and must not add --yes on its own.",
     );

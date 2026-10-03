@@ -42,6 +42,9 @@ const BOOLEANS_BY_COMMAND: Record<string, readonly string[]> = {
   rewards: ["yes"],
   trade: ["yes", "all"],
   orders: ["yes", "worse-fill"],
+  feed: ["following"],
+  mooncall: ["yes"],
+  follow: ["followers"],
 };
 
 export function parseArgs(

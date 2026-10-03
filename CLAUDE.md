@@ -35,6 +35,7 @@ erroring. And `/proxy/tokenDetails` takes its argument as a single `tokenId` str
 | `moonrush-rewards` | Creator earnings: paid, pending, held, available, and claiming |
 | `moonrush-trade` | Quoting, buying and selling; limit, take-profit, stop-loss and trailing orders |
 | `moonrush-token-dd` | One 0 to 100 due-diligence score for a token, every deduction named |
+| `moonrush-social` | The feed, one trader's timeline, a position's thread, posting a mooncall, following |
 
 ## Quick routing
 
@@ -60,6 +61,10 @@ erroring. And `/proxy/tokenDetails` takes its argument as a single `tokenId` str
 | "sell half my X", in the user's own words | `trade sell --percent 50 --address <addr>`, WITHOUT `--yes` |
 | "set a stop-loss at -20%" | `orders create --kind sl --change -20 --percent 100 --address <addr>`, WITHOUT `--yes` |
 | "my open orders", "why did my order fail" | `orders list` / `orders list --status closed` |
+| "what are people calling", "what did my follows buy" | `feed posts [--following] [--kinds comment]` |
+| "what did @x say about this position" | `mooncall read --positionId <id>` |
+| "post this as my mooncall", in the user's own words | `mooncall post`, WITHOUT `--yes` |
+| "follow @x" | `follow add --username x` |
 
 ## Prerequisites
 
@@ -94,7 +99,9 @@ tell anybody to sign in again, and do not retry.
 ## The commands that move money
 
 `rewards claim`, `trade buy`, `trade sell` and `orders create` send money, or arm an order
-that will. Everything else reads (`orders cancel` only withdraws).
+that will. `mooncall post` publishes under the user's name and goes through the same gate.
+Everything else reads, apart from `follow add|remove` and `orders cancel`, which are
+reversible and move nothing.
 
 - Run them only when the user asked for that action in this conversation, in their own
   words, with the token and the size. A research question is not a request to trade, and

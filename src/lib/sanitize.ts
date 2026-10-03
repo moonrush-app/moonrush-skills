@@ -141,3 +141,48 @@ export function sanitizeTokenRow<T>(row: T): T {
 export function sanitizeRows<T>(rows: T[]): T[] {
   return Array.isArray(rows) ? rows.map(sanitizeTokenRow) : rows;
 }
+
+/**
+ * Text that PEOPLE wrote, wherever it sits in a feed, a thread or a profile.
+ *
+ * Mooncalls, replies, bios and display names reach the reader's context exactly like a
+ * token's description does, and anyone can write them. Same treatment, by key name, across
+ * the whole tree: the feed nests a post's author, its trade, its token and its quoted post
+ * at different depths, and a cleaner that knew one shape would miss the rest.
+ *
+ * Still an allowlist of keys. Ids, addresses, signatures and URLs are never touched.
+ */
+const SOCIAL_TEXT_FIELDS = new Set([
+  "body",
+  "text",
+  "caption",
+  "ownerComment",
+  "bio",
+  "displayName",
+  "name",
+  "symbol",
+  "description",
+  "tokenName",
+  "tokenSymbol",
+]);
+
+const MAX_POST_CHARS = 2000;
+
+export function sanitizeSocial<T>(value: T, depth = 0): T {
+  if (depth > 12 || value === null || typeof value !== "object") return value;
+  if (Array.isArray(value)) return value.map((v) => sanitizeSocial(v, depth + 1)) as T;
+  const copy: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+    if (typeof v === "string" && SOCIAL_TEXT_FIELDS.has(k)) {
+      const max = k === "body" || k === "text" || k === "caption" || k === "bio" || k === "description"
+        ? MAX_POST_CHARS
+        : MAX_FIELD_CHARS;
+      const { value: clean, removed } = sanitizeText(v, max);
+      copy[k] = clean;
+      if (removed) copy[`${k}_sanitized`] = removed;
+    } else {
+      copy[k] = sanitizeSocial(v, depth + 1);
+    }
+  }
+  return copy as T;
+}
