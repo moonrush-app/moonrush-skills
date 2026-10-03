@@ -34,6 +34,7 @@ erroring. And `/proxy/tokenDetails` takes its argument as a single `tokenId` str
 | `moonrush-leaderboard` | PnL rankings over 24h / 7d / 30d / all time |
 | `moonrush-rewards` | Creator earnings: paid, pending, held, available, and claiming |
 | `moonrush-trade` | Quoting, buying and selling; limit, take-profit, stop-loss and trailing orders |
+| `moonrush-token-dd` | One 0 to 100 due-diligence score for a token, every deduction named |
 
 ## Quick routing
 
@@ -41,7 +42,10 @@ erroring. And `/proxy/tokenDetails` takes its argument as a single `tokenId` str
 |---|---|
 | "what's trending", "hot tokens on Base" | `market board --networkId 8453` |
 | "what's the fee", "how much does a trade cost" | `market config` |
-| "is PENGU safe", a bare token address | `token info --address <addr>` |
+| "is PENGU safe", "should I look at this token" | the `moonrush-token-dd` skill (`token risk`, `token info`, `token chart`, `positions stats`) |
+| a bare token address, "price of X" | `token info --address <addr>` |
+| "chart", "what did it do today" | `token chart --address <addr> --interval 1h --bars 24` |
+| "can the dev mint", "is it a honeypot", "risk" | `token risk --address <addr>` |
 | a token NAME with no address | `token search --q <name>` FIRST, then `token info` |
 | "is this Verified", "what's on the Verified list" | `token check` / `token verified` |
 | "what do I hold", "what's my portfolio worth" | `wallet portfolio` |

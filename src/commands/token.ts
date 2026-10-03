@@ -1,8 +1,10 @@
 import { api } from "../lib/api.js";
 import { print } from "../lib/args.js";
 import { sanitizeRows, sanitizeTokenRow } from "../lib/sanitize.js";
+import { parseInterval, summarize, toCandles } from "../lib/bars.js";
 import {
   checkFlags,
+  parseInteger,
   parseNetworkId,
   parseNetworkIdList,
   requireAddress,
@@ -15,9 +17,11 @@ const USAGE = `moonrush-cli token <sub> [options]
   search     --q <phrase> [--networkId <id|csv>]   Find a token by name or symbol
   verified   [--networkId <id|csv>]                The curated Verified roster (no token needed)
   check      --address <addr> [--networkId <id>]   Is one address Verified (no token needed)
+  chart      --address <addr> [--interval 1h] [--bars 100]   Price candles and a summary
+  risk       --address <addr> [--refresh]          The risk report: warnings, authorities, holder concentration
 
-networkId defaults to Solana (1399811149). Others: 4663 Robinhood, 8453 Base,
-56 BNB, 1868 Soneium, 5042 Arc.`;
+--networkId takes an id or a name: solana (default), robinhood, base, bnb, soneium, arc.
+--interval: 15s 30s 1m 5m 15m 30m 1h 4h 12h 1d 1w. --bars: 1 to 1500.`;
 
 export async function runToken(
   sub: string | undefined,
@@ -38,10 +42,51 @@ export async function runToken(
     search: ["q", "networkId"],
     verified: ["networkId"],
     check: ["address", "networkId"],
+    chart: ["address", "networkId", "interval", "bars"],
+    risk: ["address", "networkId", "refresh"],
   };
   if (ALLOWED[sub]) checkFlags(flags, ALLOWED[sub]!, `token ${sub}`);
 
   switch (sub) {
+    case "chart": {
+      const networkId = parseNetworkId(flags.networkId);
+      const address = requireAddress(flags.address, networkId);
+      const { resolution, seconds } = parseInterval(flags.interval);
+      const bars = parseInteger(flags.bars, "bars", { min: 1, max: 1500, fallback: 100 });
+      const to = Math.floor(Date.now() / 1000);
+      const raw = await api<Parameters<typeof toCandles>[0]>("/proxy/getBars", {
+        method: "POST",
+        body: {
+          symbol: tokenId(address, networkId),
+          resolution,
+          // A window a little wider than the bars asked for, and `countBack` to cap it:
+          // a quiet token has gaps, and a window of exactly N intervals returns fewer.
+          from: to - seconds * bars * 2,
+          to,
+          countBack: bars,
+          removeLeadingNullValues: true,
+        },
+      });
+      const candles = toCandles(raw).slice(-bars);
+      print({ interval: String(flags.interval ?? "1h"), summary: summarize(candles), candles }, flags);
+      return 0;
+    }
+
+    case "risk": {
+      const networkId = parseNetworkId(flags.networkId);
+      const address = requireAddress(flags.address, networkId);
+      // `level` is the verdict (safe / caution / danger); each warning carries a `title` and an
+      // `explain` written for a trader, which is what to relay. `facts` and `concentration`
+      // are the evidence behind them.
+      print(
+        await api(
+          `/token-risk/${networkId}/${encodeURIComponent(address)}${flags.refresh ? "?refresh=1" : ""}`,
+        ),
+        flags,
+      );
+      return 0;
+    }
+
     case "info": {
       const networkId = parseNetworkId(flags.networkId);
       const address = requireAddress(flags.address, networkId);

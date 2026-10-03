@@ -80,6 +80,13 @@ moonrush-cli token check --address 0x2cae...9441 --networkId 1868
 `verified` and `check` need no token, which makes them the fastest way to tell "not
 configured" from "not working".
 
+Price and risk:
+
+```bash
+moonrush-cli token chart --address <addr> [--interval 1h] [--bars 100]   # 15s 30s 1m 5m 15m 30m 1h 4h 12h 1d 1w
+moonrush-cli token risk --address <addr> [--networkId base] [--refresh]
+```
+
 ## market
 
 ```bash

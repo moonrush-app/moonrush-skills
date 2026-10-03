@@ -36,6 +36,7 @@ const GLOBAL_BOOLEANS = ["raw", "help"] as const;
 
 const BOOLEANS_BY_COMMAND: Record<string, readonly string[]> = {
   config: ["check"],
+  token: ["refresh"],
   wallet: ["refresh"],
   leaderboard: ["rank", "around"],
   rewards: ["yes"],

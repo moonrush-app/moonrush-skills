@@ -33,6 +33,8 @@ Codex: [.codex/INSTALL.md](./.codex/INSTALL.md). OpenCode: [.opencode/INSTALL.md
 ```bash
 moonrush-cli token info --address <addr> [--networkId <id>]
 moonrush-cli token search --q pengu
+moonrush-cli token chart --address <addr> --interval 4h --bars 42
+moonrush-cli token risk --address <addr> --networkId base
 moonrush-cli token verified --networkId 1868
 moonrush-cli market board --networkId 1399811149,8453
 moonrush-cli market config
