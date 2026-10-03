@@ -9,7 +9,13 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, chmodSync } from "n
  * `git add -A` away from a public repository, and this one is a bearer credential for a
  * product that moves money.
  */
-export const CONFIG_DIR = join(homedir(), ".config", "moonrush");
+/**
+ * Where credentials live. `MOONRUSH_CONFIG_DIR` moves them: a second profile, a CI runner's
+ * scratch directory, and the tests, which must never read or sign with the credentials of
+ * the machine they run on.
+ */
+export const CONFIG_DIR =
+  process.env.MOONRUSH_CONFIG_DIR || join(homedir(), ".config", "moonrush");
 export const CONFIG_FILE = join(CONFIG_DIR, ".env");
 
 export interface Config {
@@ -47,7 +53,7 @@ export interface Config {
   adminBase: string;
 
   /**
-   * An API key, as `<key id>.<secret>`, from https://app.moonrush.space/ai/keys.
+   * An API key, as `<key id>.<secret>`, from https://moonrush.space/ai/keys.
    *
    * ⚠️ AN ALTERNATIVE TO THE PRIVY SESSION, NOT AN ADDITION. When this is set the client
    * talks to the gateway instead, which does not need a browser and does not expire in an

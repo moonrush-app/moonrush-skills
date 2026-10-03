@@ -102,7 +102,7 @@ describe("networkId", () => {
     } catch (e) {
       // An unknown id must NOT fall through. The API answers an empty board for a chain it
       // does not serve, and an empty board reads as a quiet market rather than a typo.
-      expect(String((e as Error).message)).toContain("Soneium");
+      expect(String((e as Error).message)).toContain("1868 soneium");
     }
   });
 

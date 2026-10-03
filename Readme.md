@@ -43,10 +43,15 @@ moonrush-cli positions stats --tokenAddress <addr>
 moonrush-cli leaderboard pnl24h
 moonrush-cli rewards me
 moonrush-cli rewards claim          # moves money
+moonrush-cli trade quote --side buy --usd 25 --address <addr>
+moonrush-cli trade buy --usd 25 --address <addr>                  # moves money
+moonrush-cli trade sell --percent 50 --address <addr> --networkId base   # moves money
+moonrush-cli orders create --kind sl --change -20 --percent 100 --address <addr>
+moonrush-cli orders list --status closed
 ```
 
-Chains: `1399811149` Solana (default), `4663` Robinhood, `8453` Base, `56` BNB,
-`1868` Soneium, `5042` Arc.
+Chains, by id or name: `1399811149` / `solana` (default), `4663` / `robinhood`,
+`8453` / `base`, `56` / `bnb`, `1868` / `soneium`, `5042` / `arc`.
 
 Every command prints JSON on stdout and takes `--raw` for one line. Full reference:
 [docs/cli-usage.md](./docs/cli-usage.md).
@@ -67,7 +72,7 @@ One click. The session lasts about an hour and renews itself while it lives.
 
 ```bash
 moonrush-cli config --generate-key     # keypair, private half stays here at mode 600
-# paste the PUBLIC key at https://app.moonrush.space/ai/keys
+# paste the PUBLIC key at https://moonrush.space/ai/keys
 moonrush-cli config --apply-key <key id>.<secret>
 ```
 

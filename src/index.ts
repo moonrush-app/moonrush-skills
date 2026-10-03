@@ -11,6 +11,8 @@ import { runWallet } from "./commands/wallet.js";
 import { runPositions } from "./commands/positions.js";
 import { runLeaderboard } from "./commands/leaderboard.js";
 import { runRewards } from "./commands/rewards.js";
+import { runTrade } from "./commands/trade.js";
+import { runOrders } from "./commands/orders.js";
 
 const USAGE = `moonrush-cli <command> [options]
 
@@ -22,6 +24,8 @@ const USAGE = `moonrush-cli <command> [options]
   positions <sub>        Trades: public, your own, top, per token
   leaderboard <metric>   PnL rankings over 24h / 7d / 30d / all time
   rewards <sub>          Creator earnings, and claiming them
+  trade <sub>            Quote, buy and sell. MOVES MONEY.
+  orders <sub>           Limit, take-profit, stop-loss and trailing orders
 
 Run a command with --help for its sub-commands.
 Every command prints JSON on stdout and takes --raw for one line. Errors go to
@@ -61,6 +65,10 @@ async function main(): Promise<number> {
       return runLeaderboard(sub, flags);
     case "rewards":
       return runRewards(sub, flags);
+    case "trade":
+      return runTrade(sub, flags);
+    case "orders":
+      return runOrders(sub, flags);
     default:
       process.stderr.write(`Unknown command: ${command}\n\n${USAGE}\n`);
       return 1;

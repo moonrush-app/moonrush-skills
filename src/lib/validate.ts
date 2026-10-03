@@ -78,14 +78,35 @@ export const isEvmAddress = (value: string): boolean =>
  * a chain it does not know, and an empty board is indistinguishable from a quiet market:
  * the reader would conclude there was nothing trading rather than that they typed 8543.
  */
+/**
+ * Chain names, so nobody has to remember that Solana is 1399811149.
+ *
+ * The names a trader would type, plus the short forms other tools use (`sol`, `bsc`, `rh`).
+ * Matched case-blind. Kept beside [NETWORKS] so a chain added there is one line away from
+ * being nameable here.
+ */
+export const NETWORK_ALIASES: Record<string, number> = {
+  sol: 1399811149,
+  solana: 1399811149,
+  rh: 4663,
+  robinhood: 4663,
+  base: 8453,
+  bnb: 56,
+  bsc: 56,
+  soneium: 1868,
+  arc: 5042,
+};
+
 export function parseNetworkId(raw: unknown, fallback = SOLANA): number {
   if (raw === undefined || raw === true) return fallback;
+  const alias = NETWORK_ALIASES[String(raw).trim().toLowerCase()];
+  if (alias !== undefined) return alias;
   const id = Number(raw);
   if (!Number.isInteger(id) || !(id in NETWORKS)) {
     throw new InvalidArgument(
-      `Unknown networkId: ${String(raw)}\nKnown chains: ` +
+      `Unknown networkId: ${String(raw)}\nKnown chains (id or name): ` +
         Object.entries(NETWORKS)
-          .map(([id, name]) => `${id} ${name}`)
+          .map(([id, name]) => `${id} ${name.toLowerCase()}`)
           .join(", "),
     );
   }

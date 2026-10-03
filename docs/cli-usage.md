@@ -20,7 +20,7 @@ moonrush-cli login
 
 ```bash
 moonrush-cli config --generate-key
-# paste the PUBLIC key at https://app.moonrush.space/ai/keys
+# paste the PUBLIC key at https://moonrush.space/ai/keys
 moonrush-cli config --apply-key <key id>.<secret>
 ```
 
@@ -62,7 +62,9 @@ console; do not re-authenticate.
 | `1868` | Soneium |
 | `5042` | Arc |
 
-`--networkId` takes a comma-separated list wherever a board or a roster spans chains.
+`--networkId` also takes the chain's name: `solana`/`sol`, `robinhood`/`rh`, `base`,
+`bnb`/`bsc`, `soneium`, `arc`. It takes a comma-separated list wherever a board or a roster
+spans chains.
 
 ## token
 
@@ -131,6 +133,38 @@ Pages with `--page`, not a cursor.
 moonrush-cli rewards me
 moonrush-cli rewards claim          # MOVES MONEY. Asks on a terminal, refuses without one.
 ```
+
+## trade
+
+```bash
+moonrush-cli trade quote --side buy --usd 25 --address <addr> [--networkId base]
+moonrush-cli trade quote --side sell --percent 50 --address <addr>
+moonrush-cli trade buy --usd 25 --address <addr> [--slippage 3]        # MOVES MONEY
+moonrush-cli trade sell --percent 50 --address <addr>                  # MOVES MONEY
+moonrush-cli trade sell --amount 1200 --address <addr>
+moonrush-cli trade sell --all --address <addr> --networkId robinhood
+```
+
+buy and sell quote first, print the amounts, and ask on a terminal. A returned trade was
+submitted, not necessarily filled: check `positions me`.
+
+## orders
+
+```bash
+moonrush-cli orders list [--status open|closed|all] [--limit 50]
+moonrush-cli orders create --kind limit --side buy --price 0.0042 --usd 20 --address <addr>
+moonrush-cli orders create --kind tp --change 50 --percent 50 --address <addr>
+moonrush-cli orders create --kind sl --change -20 --percent 100 --address <addr> --worse-fill
+moonrush-cli orders create --kind trailing-sl --change -10 --trail 15 --percent 100 --address <addr>
+moonrush-cli orders cancel --id <uuid>
+```
+
+`create` asks on a terminal: once armed, an order trades by itself.
+
+## Profiles
+
+`MOONRUSH_CONFIG_DIR=/path` keeps credentials somewhere other than `~/.config/moonrush`,
+for a second account or a CI runner.
 
 ## Piping
 
