@@ -27,6 +27,23 @@ Codex: [.codex/INSTALL.md](./.codex/INSTALL.md). OpenCode: [.opencode/INSTALL.md
 | `moonrush-positions` | Trades: own, public, top, and who holds a token |
 | `moonrush-leaderboard` | PnL rankings over 24h / 7d / 30d / all time |
 | `moonrush-rewards` | Creator earnings, and claiming them |
+| `moonrush-trade` | Quote, buy, sell; limit, take-profit, stop-loss and trailing orders |
+| `moonrush-token-dd` | A 0 to 100 due-diligence score for a token, every deduction named |
+| `moonrush-social` | The feed, a trader's timeline, a position's thread, mooncalls, follows |
+
+## Workflows
+
+Multi-step recipes that chain the commands into an answer:
+
+| Workflow | For |
+|---|---|
+| [Token research](./docs/workflow-token-research.md) | From a name or address to what is worth saying about it |
+| [Daily brief](./docs/workflow-daily-brief.md) | The user's book, fired orders, what follows did, what moved |
+| [Trader profile](./docs/workflow-trader-profile.md) | Should I copy this trader: record, concentration, fillability |
+| [Position risk](./docs/workflow-position-risk.md) | Which holdings are unguarded, and proposing stop-losses |
+| [Market opportunities](./docs/workflow-market-opportunities.md) | A screened shortlist across every chain |
+| [Portfolio review](./docs/workflow-portfolio-review.md) | Holdings, PnL and what is driving it |
+| [Creator earnings](./docs/workflow-creator-earnings.md) | What a creator earned and why it has not arrived |
 
 ## Commands
 
@@ -107,8 +124,13 @@ filter gets written around, and eats legitimate token copy on the way.
 
 Addresses are never rewritten.
 
-`rewards claim` is the only command that moves money. It asks on a terminal and refuses
-without one.
+`rewards claim`, `trade buy`, `trade sell` and `orders create` move money (an order
+later, by itself), and `mooncall post` publishes under the user's name. Each one shows the
+exact amounts or text first, asks on a terminal, and refuses without one. `--yes` exists for
+a person typing on their own machine; the skills tell agents never to pass it.
+
+People's text in feeds and threads (posts, bios, display names) is cleaned the same way as
+token metadata.
 
 ## Development
 

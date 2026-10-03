@@ -68,3 +68,10 @@ is young, say how young.
 **Do not end with a buy or sell recommendation.** None of the above is advice, this CLI
 cannot place a trade, and a ranking is not a verdict. The useful output is "here is what is
 true about it", and then the decision is the user's.
+
+## Going further
+
+- `moonrush-cli token risk --address <addr>` is the on-chain risk report: issuer
+  authorities, upgradeable code, holder concentration, each warning with a plain title.
+- `moonrush-cli token chart --address <addr> --interval 1h --bars 48` is the price action.
+- For a single verdict from all of it, use the `moonrush-token-dd` skill.
