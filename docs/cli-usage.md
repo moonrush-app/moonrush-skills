@@ -84,7 +84,15 @@ Price and risk:
 
 ```bash
 moonrush-cli token chart --address <addr> [--interval 1h] [--bars 100]   # 15s 30s 1m 5m 15m 30m 1h 4h 12h 1d 1w
+moonrush-cli token chart --address <addr> --interval 1h --bars 72 --analyze   # + swing levels, trend, volume, last candle
 moonrush-cli token risk --address <addr> [--networkId base] [--refresh]
+```
+
+Holders and the creator, from on-chain data:
+
+```bash
+moonrush-cli token holders --address <addr> [--cursor <nextCursor>]   # 50 a page, largest first
+moonrush-cli token dev --address <addr> [--limit 25]                  # the creator's other launches
 ```
 
 ## market
@@ -109,6 +117,13 @@ moonrush-cli wallet chart --address <addr> --timeRange 7d
 moonrush-cli wallet activity --userId <uuid> --type trades --limit 50
 ```
 
+Any wallet, Moonrush user or not:
+
+```bash
+moonrush-cli wallet stats --address <addr> [--networkId <id>]     # 1d / 7d / 30d / 1y record, win rate computed
+moonrush-cli wallet created --address <addr> --networkId <id>     # tokens it created on that chain
+```
+
 Omit `--sol` and `--evm` for yourself. An account has two addresses and the API knows both.
 
 ## positions
@@ -118,6 +133,7 @@ moonrush-cli positions me --status OPEN --sortBy totalPnlUsd
 moonrush-cli positions list --tokenAddress <addr> --limit 50
 moonrush-cli positions top --sortBy totalPnlUsd
 moonrush-cli positions stats --tokenAddress <addr>
+moonrush-cli positions smart --metric pnl7d --top 10   # what the top traders hold, by how many hold it
 ```
 
 Page with `nextCursorKeyset` from the response, passed back as `--cursor`. Not

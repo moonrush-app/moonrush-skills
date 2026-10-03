@@ -87,3 +87,74 @@ export function summarize(candles: Candle[]) {
     candles: candles.length,
   };
 }
+
+const pct = (v: number) => Math.round(v * 100) / 100;
+
+/**
+ * The measurements a pattern read rests on, computed rather than eyeballed: where price sits
+ * in its range, the swing levels it has turned at, how volume moved, and what the last
+ * candle looked like. The skill names patterns from these numbers; it does not get to invent
+ * a level that is not in this list.
+ */
+export function analyze(candles: Candle[]) {
+  if (candles.length < 10) return null;
+  const last = candles[candles.length - 1]!;
+  const high = Math.max(...candles.map((c) => c.high));
+  const low = Math.min(...candles.map((c) => c.low));
+
+  // A swing is a candle whose high (low) beats the two on each side.
+  const swings: { kind: "high" | "low"; price: number; time: string }[] = [];
+  for (let i = 2; i < candles.length - 2; i++) {
+    const c = candles[i]!;
+    const around = [candles[i - 2]!, candles[i - 1]!, candles[i + 1]!, candles[i + 2]!];
+    if (around.every((o) => c.high > o.high)) swings.push({ kind: "high", price: c.high, time: c.time });
+    if (around.every((o) => c.low < o.low)) swings.push({ kind: "low", price: c.low, time: c.time });
+  }
+  const resistance = swings.filter((s) => s.kind === "high" && s.price > last.close).sort((a, b) => a.price - b.price);
+  const support = swings.filter((s) => s.kind === "low" && s.price < last.close).sort((a, b) => b.price - a.price);
+
+  // Trend from the halves, not from two points: one spike at either end would decide it.
+  const mid = Math.floor(candles.length / 2);
+  const mean = (cs: Candle[]) => cs.reduce((s, c) => s + c.close, 0) / cs.length;
+  const firstHalf = mean(candles.slice(0, mid));
+  const secondHalf = mean(candles.slice(mid));
+  const halfChangePct = firstHalf > 0 ? ((secondHalf - firstHalf) / firstHalf) * 100 : 0;
+
+  const quarter = Math.max(1, Math.floor(candles.length / 4));
+  const vol = (cs: Candle[]) => cs.reduce((s, c) => s + c.volume, 0) / cs.length;
+  const earlierVol = vol(candles.slice(0, candles.length - quarter));
+  const recentVol = vol(candles.slice(-quarter));
+
+  let streak = 0;
+  const up = last.close >= last.open;
+  for (let i = candles.length - 1; i >= 0; i--) {
+    const c = candles[i]!;
+    if (c.close >= c.open !== up) break;
+    streak++;
+  }
+
+  const ranges = candles.map((c) => (c.close > 0 ? (c.high - c.low) / c.close : 0));
+  const range = last.high - last.low;
+  const body = Math.abs(last.close - last.open);
+
+  return {
+    trend: halfChangePct > 5 ? "up" : halfChangePct < -5 ? "down" : "sideways",
+    halfOverHalfPct: pct(halfChangePct),
+    positionInRangePct: high > low ? pct(((last.close - low) / (high - low)) * 100) : null,
+    belowHighPct: high > 0 ? pct(((high - last.close) / high) * 100) : null,
+    aboveLowPct: low > 0 ? pct(((last.close - low) / low) * 100) : null,
+    nearestResistance: resistance[0] ?? null,
+    nearestSupport: support[0] ?? null,
+    swingHighs: swings.filter((s) => s.kind === "high").map(({ price, time }) => ({ price, time })),
+    swingLows: swings.filter((s) => s.kind === "low").map(({ price, time }) => ({ price, time })),
+    recentVolumeVsEarlier: earlierVol > 0 ? pct(recentVol / earlierVol) : null,
+    averageCandleRangePct: pct((ranges.reduce((s, r) => s + r, 0) / ranges.length) * 100),
+    streak: { direction: up ? "green" : "red", candles: streak },
+    lastCandle: {
+      direction: up ? "green" : "red",
+      bodyPctOfRange: range > 0 ? pct((body / range) * 100) : null,
+      upperWickPctOfRange: range > 0 ? pct(((last.high - Math.max(last.open, last.close)) / range) * 100) : null,
+      lowerWickPctOfRange: range > 0 ? pct(((Math.min(last.open, last.close) - last.low) / range) * 100) : null,
+    },
+  };
+}

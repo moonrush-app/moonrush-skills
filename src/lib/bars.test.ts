@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { parseInterval, summarize, toCandles } from "./bars";
+import { analyze, parseInterval, summarize, toCandles } from "./bars";
 
 describe("chart candles", () => {
   // The live shape, from /proxy/getBars.
@@ -39,5 +39,34 @@ describe("chart candles", () => {
     expect(parseInterval("4H").resolution).toBe("240");
     expect(parseInterval("1d").resolution).toBe("1D");
     expect(() => parseInterval("2h")).toThrow(/one of/);
+  });
+});
+
+describe("chart analysis", () => {
+  const c = (i: number, o: number, h: number, l: number, cl: number, v = 100) => ({
+    time: new Date(1790000000000 + i * 3600_000).toISOString(),
+    open: o,
+    high: h,
+    low: l,
+    close: cl,
+    volume: v,
+  });
+
+  test("too few candles is no analysis, not a guess", () => {
+    expect(analyze([c(0, 1, 1, 1, 1)])).toBeNull();
+  });
+
+  test("finds the swing levels on each side of the close, the trend and the streak", () => {
+    const rows = [
+      c(0, 10, 11, 9, 10), c(1, 10, 12, 9, 11), c(2, 11, 20, 10, 15), c(3, 15, 16, 12, 13),
+      c(4, 13, 14, 11, 12), c(5, 12, 13, 5, 8), c(6, 8, 10, 7, 9), c(7, 9, 12, 8, 11),
+      c(8, 11, 14, 10, 13), c(9, 13, 15, 12, 14, 300), c(10, 14, 16, 13, 15, 300), c(11, 15, 16.5, 14, 16, 300),
+    ];
+    const a = analyze(rows)!;
+    expect(a.nearestResistance?.price).toBe(20);
+    expect(a.nearestSupport?.price).toBe(5);
+    expect(a.streak).toEqual({ direction: "green", candles: 6 });
+    expect(a.recentVolumeVsEarlier).toBe(3);
+    expect(a.belowHighPct).toBe(20);
   });
 });

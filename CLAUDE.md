@@ -36,6 +36,12 @@ erroring. And `/proxy/tokenDetails` takes its argument as a single `tokenId` str
 | `moonrush-trade` | Quoting, buying and selling; limit, take-profit, stop-loss and trailing orders |
 | `moonrush-token-dd` | One 0 to 100 due-diligence score for a token, every deduction named |
 | `moonrush-social` | The feed, one trader's timeline, a position's thread, posting a mooncall, following |
+| `moonrush-kline-pattern` | A technical read of a chart: trend, support and resistance, volume, named patterns |
+| `moonrush-smart-money` | What the top traders on the leaderboard are holding right now |
+| `moonrush-token-buy` | The user wants to buy a token, especially by name: resolve, quick DD, size, quote, buy |
+| `moonrush-holder-analysis` | Who holds a token, concentration, whales, pools and burns |
+| `moonrush-dev-score` | Who created a token and what their previous launches became |
+| `moonrush-wallet-score` | Whether any wallet, Moonrush user or not, is a good trader |
 
 ## Quick routing
 
@@ -52,7 +58,7 @@ erroring. And `/proxy/tokenDetails` takes its argument as a single `tokenId` str
 | "what do I hold", "what's my portfolio worth" | `wallet portfolio` |
 | "where do I deposit" | `wallet deposits` |
 | "my trades", "how am I doing" | `positions me` |
-| "who holds this token", "mooncalls on this" | `positions stats --tokenAddress <addr>` |
+| "who on Moonrush holds this", "mooncalls on this" | `positions stats --tokenAddress <addr>` |
 | "who are the best traders" | `leaderboard <metric>`, after asking which window |
 | "what have I earned as a creator" | `rewards me` |
 | "claim my rewards", in the user's own words | `rewards claim`, WITHOUT `--yes` |
@@ -65,6 +71,12 @@ erroring. And `/proxy/tokenDetails` takes its argument as a single `tokenId` str
 | "what did @x say about this position" | `mooncall read --positionId <id>` |
 | "post this as my mooncall", in the user's own words | `mooncall post`, WITHOUT `--yes` |
 | "follow @x" | `follow add --username x` |
+| "support and resistance", "is it breaking out" | the `moonrush-kline-pattern` skill (`token chart --analyze`) |
+| "what are top traders buying", "smart money" | `positions smart --metric pnl7d` |
+| "buy some X", by name | the `moonrush-token-buy` skill, ending in `trade buy` WITHOUT `--yes` |
+| "who holds this", "top holders", "is supply concentrated" | `token holders --address <addr>` |
+| "who is the dev", "has the dev rugged before" | `token dev --address <addr>` |
+| a wallet address: "is this a good trader", "whose wallet is this" | `wallet stats --address <addr>` |
 
 ## Prerequisites
 

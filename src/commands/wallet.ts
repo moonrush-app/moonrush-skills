@@ -1,5 +1,7 @@
 import { api } from "../lib/api.js";
 import { print } from "../lib/args.js";
+import { creatorSummary, walletSummary } from "../lib/research.js";
+import { sanitizeRows } from "../lib/sanitize.js";
 import {
   InvalidArgument,
   checkFlags,
@@ -7,6 +9,7 @@ import {
   isSolanaAddress,
   parseChoice,
   parseInteger,
+  parseNetworkId,
   requireUuid,
 } from "../lib/validate.js";
 
@@ -20,6 +23,10 @@ const USAGE = `moonrush-cli wallet <sub> [options]
                                                           Portfolio value over time
   activity    --userId <uuid> [--type <t>] [--limit <n>] [--cursor <n>]
                                                           One person, every chain
+  stats       --address <addr> [--networkId <id|name>]   ANY wallet's trading record:
+                                                          win rate, realised PnL, volume, 1d/7d/30d/1y
+  created     --address <addr> --networkId <id|name> [--limit 25]
+                                                          Tokens an address launched, and how they did
 
 --sortBy: valueUsd (default), pnlUsd, pnlPercent
 --timeRange: 24h (default), 7d, 30d, all
@@ -78,10 +85,38 @@ export async function runWallet(
     deposits: [],
     chart: ["address", "timeRange", "unified"],
     activity: ["userId", "type", "limit", "cursor"],
+    stats: ["address", "networkId"],
+    created: ["address", "networkId", "limit"],
   };
   if (ALLOWED[sub]) checkFlags(flags, ALLOWED[sub]!, `wallet ${sub}`);
 
   switch (sub) {
+    case "stats": {
+      const address = anyWallet(flags.address);
+      const networkId = flags.networkId === undefined ? undefined : parseNetworkId(flags.networkId);
+      const raw = await api<Record<string, unknown>>("/proxy/walletStats", {
+        method: "POST",
+        body: { walletAddress: address, ...(networkId ? { networkId } : {}) },
+      });
+      // The summary first (computed, tested); the raw windows after it for anything else.
+      print({ wallet: address, summary: walletSummary(raw), raw }, flags);
+      return 0;
+    }
+
+    case "created": {
+      const address = anyWallet(flags.address);
+      if (flags.networkId === undefined) throw new InvalidArgument("created needs --networkId: launches are per chain");
+      const networkId = parseNetworkId(flags.networkId);
+      const limit = parseInteger(flags.limit, "limit", { min: 1, max: 50, fallback: 25 });
+      const launched = await api<{ results?: Parameters<typeof creatorSummary>[0] }>("/proxy/creatorTokens", {
+        method: "POST",
+        body: { creatorAddress: address, networkId, limit },
+      });
+      const rows = launched.results ?? [];
+      print({ creator: address, summary: creatorSummary(rows), launches: sanitizeRows(rows) }, flags);
+      return 0;
+    }
+
     case "balances":
       print(await api(`/wallet/balances${addressPair(flags)}`), flags);
       return 0;
@@ -137,4 +172,12 @@ export async function runWallet(
       process.stderr.write(`Unknown sub-command: ${sub}\n\n${USAGE}\n`);
       return 1;
   }
+}
+
+/** A Solana or EVM wallet address, for the reads that work on any wallet. */
+function anyWallet(raw: unknown): string {
+  if (typeof raw !== "string" || !raw.trim()) throw new InvalidArgument("--address is required");
+  const a = raw.trim();
+  if (isSolanaAddress(a) || isEvmAddress(a)) return a;
+  throw new InvalidArgument(`Not a Solana or EVM address: ${a}`);
 }

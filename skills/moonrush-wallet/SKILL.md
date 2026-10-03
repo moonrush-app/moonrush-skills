@@ -1,7 +1,7 @@
 ---
 name: moonrush-wallet
 description: Read a Moonrush wallet. Balances across every chain in one call, holdings with unrealised PnL, active deposit addresses, portfolio value over time, and one person's activity across every chain they trade. Use when the user asks what they hold, what their portfolio is worth, how their wallet has performed, where to deposit, or what a given account has been doing.
-argument-hint: "<balances|portfolio|deposits|chart|activity> [--sol <addr>] [--evm <addr>]"
+argument-hint: "<balances|portfolio|deposits|chart|activity|stats|created> [--sol <addr>] [--evm <addr>]"
 metadata:
   cliHelp: "moonrush-cli wallet --help"
 ---
@@ -32,6 +32,8 @@ re-authenticate. Turning the tier on is a toggle in the console.
 | `wallet deposits` | The addresses to deposit to right now |
 | `wallet chart --address <addr> [--timeRange <r>] [--unified]` | Portfolio value over time |
 | `wallet activity --userId <uuid> [--type <t>] [--limit <n>] [--cursor <n>]` | One person, every chain |
+| `wallet stats --address <addr> [--networkId <id>]` | ANY wallet's on-chain trading record over 1d, 7d, 30d and 1y, with win rate computed. See `moonrush-wallet-score` |
+| `wallet created --address <addr> --networkId <id> [--limit 25]` | The tokens a wallet created on one chain. See `moonrush-dev-score` |
 
 `--sortBy`: `valueUsd` (default), `pnlUsd`, `pnlPercent`.
 `--timeRange`: `24h` (default), `7d`, `30d`, `all`.

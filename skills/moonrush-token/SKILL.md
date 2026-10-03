@@ -1,7 +1,7 @@
 ---
 name: moonrush-token
 description: Look up a token on Moonrush by address or by name. Live price, market cap, liquidity, holder and launchpad risk fields, the curated Verified roster, and whether one address carries the Verified tick. Covers Solana, Robinhood Chain, Base, BNB, Soneium and Arc. Use when the user asks about a token's price or details on Moonrush, searches for a token by name or symbol, asks whether a token is Verified, asks what is on the Verified list for a chain, or wants to check an address before trading it.
-argument-hint: "<info|search|verified|check|chart|risk> [--address <addr>] [--q <phrase>] [--networkId <id|name>]"
+argument-hint: "<info|search|verified|check|chart|risk|holders|dev> [--address <addr>] [--q <phrase>] [--networkId <id|name>]"
 metadata:
   cliHelp: "moonrush-cli token --help"
 ---
@@ -42,12 +42,15 @@ shape almost nobody guesses. The CLI handles both.
 | `token search --q <phrase> [--networkId <id\|csv>]` | Find a token when the user gives a name or symbol rather than an address |
 | `token verified [--networkId <id\|csv>]` | The curated Verified roster for a chain |
 | `token check --address <addr> [--networkId <id>]` | Whether one address is Verified on one chain |
-| `token chart --address <addr> [--interval 1h] [--bars 100]` | Price candles (open, high, low, close, volume) plus a summary: first open, last close, change %, range, total volume. Intervals: 15s 30s 1m 5m 15m 30m 1h 4h 12h 1d 1w |
+| `token chart --address <addr> [--interval 1h] [--bars 100] [--analyze]` | Price candles (open, high, low, close, volume) plus a summary: first open, last close, change %, range, total volume. `--analyze` adds trend, swing levels, volume trend and last-candle shape (see `moonrush-kline-pattern`). Intervals: 15s 30s 1m 5m 15m 30m 1h 4h 12h 1d 1w |
 | `token risk --address <addr> [--refresh]` | The risk report: a `level` verdict, `warnings` each with a trader-facing `title` and `explain`, issuer authorities in `facts`, holder `concentration` |
+| `token holders --address <addr> [--cursor <c>]` | Every holder, largest first, 50 a page: balance, USD value, share of supply, holding since. `nextCursor` pages on |
+| `token dev --address <addr> [--limit 25]` | The token's creator and every token they launched on that chain, with a computed `summary` (graduated, alive, dead, flagged) |
 
 `--networkId` takes an id or a chain name: `solana`, `robinhood`, `base`, `bnb`, `soneium`, `arc`.
 
-For a single verdict combining all of these, use the `moonrush-token-dd` skill.
+For a single verdict combining all of these, use the `moonrush-token-dd` skill. For holders and
+the creator in depth, `moonrush-holder-analysis` and `moonrush-dev-score`.
 
 `--networkId` defaults to Solana (`1399811149`). The others: `4663` Robinhood Chain,
 `8453` Base, `56` BNB, `1868` Soneium, `5042` Arc. `search` and `verified` also accept a

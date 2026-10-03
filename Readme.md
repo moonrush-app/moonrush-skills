@@ -30,6 +30,12 @@ Codex: [.codex/INSTALL.md](./.codex/INSTALL.md). OpenCode: [.opencode/INSTALL.md
 | `moonrush-trade` | Quote, buy, sell; limit, take-profit, stop-loss and trailing orders |
 | `moonrush-token-dd` | A 0 to 100 due-diligence score for a token, every deduction named |
 | `moonrush-social` | The feed, a trader's timeline, a position's thread, mooncalls, follows |
+| `moonrush-kline-pattern` | A technical read of a chart: trend, swing levels, volume, named patterns with their rules |
+| `moonrush-smart-money` | What the leaderboard's top traders hold now, ranked by how many of them hold it |
+| `moonrush-token-buy` | From "buy some X" to a confirmed trade: resolve, quick DD, size, quote, buy |
+| `moonrush-holder-analysis` | The full holder list, concentration, fresh whales, pools and burns |
+| `moonrush-dev-score` | A 0 to 100 score of a token's creator from everything they launched before |
+| `moonrush-wallet-score` | Any wallet's on-chain trading record as a score: skilled, lucky, bot or dev |
 
 ## Workflows
 
@@ -59,6 +65,10 @@ moonrush-cli wallet portfolio --sortBy pnlUsd
 moonrush-cli wallet balances
 moonrush-cli positions me --status OPEN
 moonrush-cli positions stats --tokenAddress <addr>
+moonrush-cli positions smart --metric pnl7d --top 10
+moonrush-cli token holders --address <addr>
+moonrush-cli token dev --address <addr>
+moonrush-cli wallet stats --address <any wallet>
 moonrush-cli leaderboard pnl24h
 moonrush-cli rewards me
 moonrush-cli rewards claim          # moves money

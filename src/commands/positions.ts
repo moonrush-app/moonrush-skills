@@ -1,5 +1,7 @@
 import { api } from "../lib/api.js";
 import { print } from "../lib/args.js";
+import { sanitizeText } from "../lib/sanitize.js";
+import { smartMoney, type TraderPosition } from "../lib/research.js";
 import {
   checkFlags,
   parseChoice,
@@ -16,6 +18,8 @@ const USAGE = `moonrush-cli positions <sub> [options]
   me       [--status <s>] [--sortBy <f>] [--limit <n>] [--cursor <c>]
                                                            Your own trades
   top      [--sortBy <f>] [--limit <n>]                    Best open trades
+  smart    [--metric pnl7d] [--top 10]                     What the leaderboard's top traders hold now,
+                                                           by how many of them hold each token
   stats    --tokenAddress <addr> [--networkId <id>]        Who is holding one token
 
 --status: OPEN, CLOSED
@@ -64,6 +68,7 @@ export async function runPositions(
     list: ["userId", "tokenAddress", "status", "sortBy", "limit", "cursor"],
     me: ["status", "sortBy", "limit", "cursor"],
     top: ["sortBy", "limit"],
+    smart: ["metric", "top"],
     stats: ["tokenAddress", "networkId"],
   };
   if (ALLOWED[sub]) checkFlags(flags, ALLOWED[sub]!, `positions ${sub}`);
@@ -94,6 +99,34 @@ export async function runPositions(
       return 0;
     }
 
+    case "smart": {
+      // What the top of the leaderboard is holding right now, folded by token in code.
+      const metric = parseChoice(flags.metric, "metric", ["pnl24h", "pnl7d", "pnl30d", "pnlAll"] as const, "pnl7d");
+      const top = parseInteger(flags.top, "top", { min: 3, max: 25, fallback: 10 });
+      const board = await api<{ items?: { userId: string; username?: string | null; rank?: number; score?: number }[] }>(
+        `/leaderboard/${metric}?limit=${top}`,
+      );
+      const traders = (board.items ?? []).slice(0, top);
+      const lists = await Promise.all(
+        traders.map((t) =>
+          api<{ items?: TraderPosition[] }>(
+            `/positions?userId=${t.userId}&status=OPEN&sortBy=currentBalanceUsd&limit=50`,
+          )
+            .then((r) => (r.items ?? []).map((p) => ({ ...p, username: t.username ?? null })))
+            .catch(() => [] as TraderPosition[]),
+        ),
+      );
+      print(
+        {
+          metric,
+          traders: traders.map((t) => ({ rank: t.rank, username: t.username, pnlUsd: t.score })),
+          tokens: sanitizeSmart(smartMoney(lists.flat())),
+        },
+        flags,
+      );
+      return 0;
+    }
+
     case "stats": {
       const networkId = parseNetworkId(flags.networkId);
       const address = requireAddress(flags.tokenAddress, networkId);
@@ -111,4 +144,9 @@ export async function runPositions(
       process.stderr.write(`Unknown sub-command: ${sub}\n\n${USAGE}\n`);
       return 1;
   }
+}
+
+/** Symbols in the smart-money fold come from token deployers: cleaned like any token row. */
+function sanitizeSmart<T extends { symbol: string | null }>(rows: T[]): T[] {
+  return rows.map((r) => ({ ...r, symbol: r.symbol == null ? null : sanitizeText(r.symbol).value }));
 }

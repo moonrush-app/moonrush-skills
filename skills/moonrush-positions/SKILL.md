@@ -1,7 +1,7 @@
 ---
 name: moonrush-positions
 description: Read trades on Moonrush. Public trades with filters, your own trade history, the best open trades right now, and who on Moonrush is holding a given token with what PnL. Use when the user asks about their trades or someone else's, asks what the top traders are in, asks how many Moonrush users hold a token, or wants the mooncalls on a token.
-argument-hint: "<list|me|top|stats> [--tokenAddress <addr>] [--status OPEN|CLOSED]"
+argument-hint: "<list|me|top|stats|smart> [--tokenAddress <addr>] [--status OPEN|CLOSED]"
 metadata:
   cliHelp: "moonrush-cli positions --help"
 ---
@@ -31,6 +31,7 @@ re-authenticate. Turning the tier on is a toggle in the console.
 | `positions me [--status] [--sortBy] [--limit] [--cursor]` | The signed-in user's own trades |
 | `positions top [--sortBy] [--limit]` | The best open trades right now |
 | `positions stats --tokenAddress <addr> [--networkId <id>]` | Who on Moonrush holds one token |
+| `positions smart [--metric pnl7d] [--top 10]` | What the leaderboard's top traders hold now, one row per token, ranked by how many of them hold it. See `moonrush-smart-money` |
 
 `--status`: `OPEN`, `CLOSED`.
 `--sortBy` on `list` and `me`: `openedAt` (default), `currentBalanceUsd`, `totalPnlUsd`.
