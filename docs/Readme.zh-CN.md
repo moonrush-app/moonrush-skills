@@ -2,7 +2,7 @@
 
 ![Moonrush Agent Skills](https://raw.githubusercontent.com/moonrush-app/moonrush-skills/main/static/moonrush-skills.png)
 
-[English](./Readme.md) ·
+[English](../Readme.md) ·
 **简体中文** ·
 [Français](./Readme.fr.md) ·
 [한국어](./Readme.ko.md) ·
@@ -30,7 +30,7 @@ Soneium 和 Arc 上的实时发现榜单，代币基本面与明确的风险判�
 挂好两个出场单的 bracket 建仓，以及钱包侧的余额、组合价值变化、充值与活动记录。每一条花钱的路径都会
 先报价、把数字摆出来，并在终端上向本人确认。
 
-> 英文版 [Readme.md](./Readme.md) 是唯一权威版本。本页若与之不一致，以英文版为准。
+> 英文版 [Readme.md](../Readme.md) 是唯一权威版本。本页若与之不一致，以英文版为准。
 
 ## 安装
 
@@ -50,9 +50,9 @@ npx skills add moonrush-app/moonrush-skills
 | 宿主 | 安装 |
 |---|---|
 | Claude Code、Codex、OpenCode、Cursor | `npx skills add moonrush-app/moonrush-skills` |
-| Codex，手动 | [.codex/INSTALL.md](./.codex/INSTALL.md) |
-| OpenCode，手动 | [.opencode/INSTALL.md](./.opencode/INSTALL.md) |
-| Cursor | 包内带有 [.cursor-plugin/plugin.json](./.cursor-plugin/plugin.json)，把 Cursor 指向本仓库或已安装的 npm 包 |
+| Codex，手动 | [.codex/INSTALL.md](../.codex/INSTALL.md) |
+| OpenCode，手动 | [.opencode/INSTALL.md](../.opencode/INSTALL.md) |
+| Cursor | 包内带有 [.cursor-plugin/plugin.json](../.cursor-plugin/plugin.json)，把 Cursor 指向本仓库或已安装的 npm 包 |
 
 ## 用自然语言提问
 
@@ -69,7 +69,7 @@ npx skills add moonrush-app/moonrush-skills
 | 「帮我读一下这张图」 | `moonrush-kline-pattern` |
 | 「买 25 美元的 `<代币>`」 | `moonrush-token-buy`：解析、快速尽调、定量、报价，然后问你 |
 | 「买 50 美元 X，+40% 止盈，-20% 止损」 | `moonrush-bracket`：先买入，再挂两个出场单 |
-| 「我哪些仓位没有止损？」 | [仓位风险](./docs/workflow-position-risk.md) 工作流 |
+| 「我哪些仓位没有止损？」 | [仓位风险](./workflow-position-risk.md) 工作流 |
 | 「我的喊单赚了多少，为什么还没到账？」 | `moonrush-rewards` |
 
 没有任何花钱的动作会只凭一句话就发生。技能会先报价、把数字摆出来、在终端上问你，并且被明确要求
@@ -102,17 +102,17 @@ npx skills add moonrush-app/moonrush-skills
 
 | 工作流 | 用于 |
 |---|---|
-| [代币研究](./docs/workflow-token-research.md) | 从一个名称或地址，到真正值得说的结论 |
-| [每日简报](./docs/workflow-daily-brief.md) | 自己的持仓、已触发的委托、关注的人做了什么、什么在动 |
-| [交易者画像](./docs/workflow-trader-profile.md) | 该不该跟这个人：记录、集中度、能否成交 |
-| [仓位风险](./docs/workflow-position-risk.md) | 哪些持仓没有保护，并给出止损建议 |
-| [市场机会](./docs/workflow-market-opportunities.md) | 跨全部链筛出的候选名单 |
-| [组合复盘](./docs/workflow-portfolio-review.md) | 持仓、盈亏，以及是什么在驱动它 |
-| [创作者收益](./docs/workflow-creator-earnings.md) | 创作者赚到了什么，以及为什么还没到账 |
+| [代币研究](./workflow-token-research.md) | 从一个名称或地址，到真正值得说的结论 |
+| [每日简报](./workflow-daily-brief.md) | 自己的持仓、已触发的委托、关注的人做了什么、什么在动 |
+| [交易者画像](./workflow-trader-profile.md) | 该不该跟这个人：记录、集中度、能否成交 |
+| [仓位风险](./workflow-position-risk.md) | 哪些持仓没有保护，并给出止损建议 |
+| [市场机会](./workflow-market-opportunities.md) | 跨全部链筛出的候选名单 |
+| [组合复盘](./workflow-portfolio-review.md) | 持仓、盈亏，以及是什么在驱动它 |
+| [创作者收益](./workflow-creator-earnings.md) | 创作者赚到了什么，以及为什么还没到账 |
 
 ## 命令
 
-命令与参数本身不翻译。完整参考见英文版 [Readme.md](./Readme.md#commands)，或直接运行：
+命令与参数本身不翻译。完整参考见英文版 [Readme.md](../Readme.md#commands)，或直接运行：
 
 ```bash
 moonrush-cli --help
@@ -152,7 +152,7 @@ moonrush-cli config --apply-key <key id>.<secret>
 `token verified`、`token check` 和 `market config` 完全不需要凭证。
 
 **环境变量，用于容器或 CI。** 同样的凭证，不需要配置文件，且两者同时存在时环境变量优先。把
-[.env.example](./.env.example) 复制到 `~/.config/moonrush/.env`，或者直接 export：
+[.env.example](../.env.example) 复制到 `~/.config/moonrush/.env`，或者直接 export：
 
 | 变量 | 含义 |
 |---|---|

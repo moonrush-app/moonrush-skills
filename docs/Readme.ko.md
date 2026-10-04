@@ -2,7 +2,7 @@
 
 ![Moonrush Agent Skills](https://raw.githubusercontent.com/moonrush-app/moonrush-skills/main/static/moonrush-skills.png)
 
-[English](./Readme.md) ·
+[English](../Readme.md) ·
 [简体中文](./Readme.zh-CN.md) ·
 [Français](./Readme.fr.md) ·
 **한국어** ·
@@ -32,7 +32,7 @@ Verified 명단, 아무 차트의 기술적 해석, 집중도와 신규 고래�
 가치·입금·활동 기록까지. 돈을 쓰는 모든 경로는 먼저 견적을 내고 숫자를 보여준 뒤, 터미널 앞의 사람에게
 확인을 받습니다.
 
-> 영어 [Readme.md](./Readme.md)가 유일한 기준입니다. 내용이 어긋나면 영어판을 따릅니다.
+> 영어 [Readme.md](../Readme.md)가 유일한 기준입니다. 내용이 어긋나면 영어판을 따릅니다.
 
 ## 설치
 
@@ -52,9 +52,9 @@ Claude Code를 비롯해 `.claude-plugin`을 읽는 호스트라면 위 명령 �
 | 호스트 | 설치 |
 |---|---|
 | Claude Code, Codex, OpenCode, Cursor | `npx skills add moonrush-app/moonrush-skills` |
-| Codex, 수동 | [.codex/INSTALL.md](./.codex/INSTALL.md) |
-| OpenCode, 수동 | [.opencode/INSTALL.md](./.opencode/INSTALL.md) |
-| Cursor | 패키지에 [.cursor-plugin/plugin.json](./.cursor-plugin/plugin.json)이 들어 있습니다. Cursor가 이 저장소나 설치된 npm 패키지를 보도록 설정하세요 |
+| Codex, 수동 | [.codex/INSTALL.md](../.codex/INSTALL.md) |
+| OpenCode, 수동 | [.opencode/INSTALL.md](../.opencode/INSTALL.md) |
+| Cursor | 패키지에 [.cursor-plugin/plugin.json](../.cursor-plugin/plugin.json)이 들어 있습니다. Cursor가 이 저장소나 설치된 npm 패키지를 보도록 설정하세요 |
 
 ## 자연어로 물어보기
 
@@ -72,7 +72,7 @@ Claude Code를 비롯해 `.claude-plugin`을 읽는 호스트라면 위 명령 �
 | "이 차트 좀 읽어줘" | `moonrush-kline-pattern` |
 | "`<토큰>` 25달러어치 사줘" | `moonrush-token-buy`: 토큰 확정, 빠른 실사, 금액, 견적, 그리고 확인 요청 |
 | "X 50달러 사고 +40% 익절, -20% 손절" | `moonrush-bracket`: 매수, 그다음 양쪽 출구 |
-| "내 포지션 중에 손절 없는 건?" | [포지션 리스크](./docs/workflow-position-risk.md) 워크플로 |
+| "내 포지션 중에 손절 없는 건?" | [포지션 리스크](./workflow-position-risk.md) 워크플로 |
 | "내 콜로 얼마 벌었고 왜 안 들어왔어?" | `moonrush-rewards` |
 
 말 한마디로 돈이 움직이는 일은 없습니다. 스킬은 먼저 견적을 내고 숫자를 보여주며 터미널에서 묻고,
@@ -105,18 +105,18 @@ Claude Code를 비롯해 `.claude-plugin`을 읽는 호스트라면 위 명령 �
 
 | 워크플로 | 용도 |
 |---|---|
-| [토큰 리서치](./docs/workflow-token-research.md) | 이름이나 주소에서 말할 가치가 있는 결론까지 |
-| [데일리 브리핑](./docs/workflow-daily-brief.md) | 내 포지션, 체결된 주문, 팔로우가 한 일, 무엇이 움직였는지 |
-| [트레이더 프로필](./docs/workflow-trader-profile.md) | 따라갈 만한가: 이력, 집중도, 체결 가능성 |
-| [포지션 리스크](./docs/workflow-position-risk.md) | 보호 없는 보유는 무엇이고, 어떤 손절을 제안할지 |
-| [시장 기회](./docs/workflow-market-opportunities.md) | 모든 체인에서 걸러낸 후보 목록 |
-| [포트폴리오 리뷰](./docs/workflow-portfolio-review.md) | 보유, 손익, 그리고 그것을 움직이는 요인 |
-| [크리에이터 수익](./docs/workflow-creator-earnings.md) | 얼마를 벌었고, 왜 아직 안 들어왔는지 |
+| [토큰 리서치](./workflow-token-research.md) | 이름이나 주소에서 말할 가치가 있는 결론까지 |
+| [데일리 브리핑](./workflow-daily-brief.md) | 내 포지션, 체결된 주문, 팔로우가 한 일, 무엇이 움직였는지 |
+| [트레이더 프로필](./workflow-trader-profile.md) | 따라갈 만한가: 이력, 집중도, 체결 가능성 |
+| [포지션 리스크](./workflow-position-risk.md) | 보호 없는 보유는 무엇이고, 어떤 손절을 제안할지 |
+| [시장 기회](./workflow-market-opportunities.md) | 모든 체인에서 걸러낸 후보 목록 |
+| [포트폴리오 리뷰](./workflow-portfolio-review.md) | 보유, 손익, 그리고 그것을 움직이는 요인 |
+| [크리에이터 수익](./workflow-creator-earnings.md) | 얼마를 벌었고, 왜 아직 안 들어왔는지 |
 
 ## 명령
 
 명령과 옵션 자체는 번역하지 않습니다. 전체 참조는 영어
-[Readme.md](./Readme.md#commands)에 있고, 바로 보려면:
+[Readme.md](../Readme.md#commands)에 있고, 바로 보려면:
 
 ```bash
 moonrush-cli --help
@@ -158,7 +158,7 @@ moonrush-cli config --apply-key <key id>.<secret>
 `token verified`, `token check`, `market config`는 자격 증명이 전혀 필요하지 않습니다.
 
 **환경 변수, 컨테이너나 CI용.** 설정 파일 없이 같은 자격 증명을 쓰며, 둘 다 있으면 환경 변수가
-이깁니다. [.env.example](./.env.example)을 `~/.config/moonrush/.env`로 복사하거나 export 하세요.
+이깁니다. [.env.example](../.env.example)을 `~/.config/moonrush/.env`로 복사하거나 export 하세요.
 
 | 변수 | 설명 |
 |---|---|

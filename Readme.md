@@ -3,10 +3,10 @@
 ![Moonrush Agent Skills](https://raw.githubusercontent.com/moonrush-app/moonrush-skills/main/static/moonrush-skills.png)
 
 **English** ·
-[简体中文](./Readme.zh-CN.md) ·
-[Français](./Readme.fr.md) ·
-[한국어](./Readme.ko.md) ·
-[日本語](./Readme.ja.md)
+[简体中文](./docs/Readme.zh-CN.md) ·
+[Français](./docs/Readme.fr.md) ·
+[한국어](./docs/Readme.ko.md) ·
+[日本語](./docs/Readme.ja.md)
 
 [![Console](https://img.shields.io/badge/console-moonrush.space%2Fai-7C3AED)](https://moonrush.space/ai)
 [![npm](https://img.shields.io/npm/v/moonrush-cli?color=5865F2&label=moonrush-cli)](https://www.npmjs.com/package/moonrush-cli)

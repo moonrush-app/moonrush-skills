@@ -2,7 +2,7 @@
 
 ![Moonrush Agent Skills](https://raw.githubusercontent.com/moonrush-app/moonrush-skills/main/static/moonrush-skills.png)
 
-[English](./Readme.md) ·
+[English](../Readme.md) ·
 [简体中文](./Readme.zh-CN.md) ·
 [Français](./Readme.fr.md) ·
 [한국어](./Readme.ko.md) ·
@@ -32,7 +32,7 @@ Base、BNB、Soneium、Arc のリアルタイムな発見ボード、トーク�
 入金・アクティビティというウォレット側。お金を使う経路はすべて、まず見積りを出し、数字を見せ、端末の
 前にいる本人に確認します。
 
-> 英語版の [Readme.md](./Readme.md) が唯一の基準です。食い違う場合は英語版に従ってください。
+> 英語版の [Readme.md](../Readme.md) が唯一の基準です。食い違う場合は英語版に従ってください。
 
 ## インストール
 
@@ -52,9 +52,9 @@ Claude Code など `.claude-plugin` を読むホストなら、上のコマン�
 | ホスト | インストール |
 |---|---|
 | Claude Code、Codex、OpenCode、Cursor | `npx skills add moonrush-app/moonrush-skills` |
-| Codex、手動 | [.codex/INSTALL.md](./.codex/INSTALL.md) |
-| OpenCode、手動 | [.opencode/INSTALL.md](./.opencode/INSTALL.md) |
-| Cursor | パッケージに [.cursor-plugin/plugin.json](./.cursor-plugin/plugin.json) が入っています。Cursor にこのリポジトリか、インストール済みの npm パッケージを指させてください |
+| Codex、手動 | [.codex/INSTALL.md](../.codex/INSTALL.md) |
+| OpenCode、手動 | [.opencode/INSTALL.md](../.opencode/INSTALL.md) |
+| Cursor | パッケージに [.cursor-plugin/plugin.json](../.cursor-plugin/plugin.json) が入っています。Cursor にこのリポジトリか、インストール済みの npm パッケージを指させてください |
 
 ## 自然な言葉で尋ねる
 
@@ -72,7 +72,7 @@ Claude Code など `.claude-plugin` を読むホストなら、上のコマン�
 | 「このチャートを読んで」 | `moonrush-kline-pattern` |
 | 「`<トークン>` を 25 ドル買って」 | `moonrush-token-buy`: 特定、簡易デューデリ、数量、見積り、そして確認 |
 | 「X を 50 ドル、+40% で利確、-20% で損切り」 | `moonrush-bracket`: 買い、続いて両方の出口 |
-| 「損切りのないポジションはどれ?」 | [ポジションのリスク](./docs/workflow-position-risk.md) ワークフロー |
+| 「損切りのないポジションはどれ?」 | [ポジションのリスク](./workflow-position-risk.md) ワークフロー |
 | 「自分のコールでいくら得た? なぜ届かない?」 | `moonrush-rewards` |
 
 ひと言だけでお金が動くことはありません。スキルはまず見積りを出し、数字を見せ、端末で尋ね、
@@ -105,18 +105,18 @@ Claude Code など `.claude-plugin` を読むホストなら、上のコマン�
 
 | ワークフロー | 用途 |
 |---|---|
-| [トークン調査](./docs/workflow-token-research.md) | 名前かアドレスから、言う価値のある結論まで |
-| [デイリーブリーフ](./docs/workflow-daily-brief.md) | 自分の持ち高、発動した注文、フォローの動き、動いたもの |
-| [トレーダー評価](./docs/workflow-trader-profile.md) | 追随すべきか: 実績、集中度、約定可能性 |
-| [ポジションのリスク](./docs/workflow-position-risk.md) | 保護のない保有はどれか、どの損切りを提案するか |
-| [市場の機会](./docs/workflow-market-opportunities.md) | 全チェーンから絞った候補リスト |
-| [ポートフォリオ review](./docs/workflow-portfolio-review.md) | 保有、損益、そして何がそれを動かしているか |
-| [クリエイター収益](./docs/workflow-creator-earnings.md) | 何を得たか、なぜまだ届かないか |
+| [トークン調査](./workflow-token-research.md) | 名前かアドレスから、言う価値のある結論まで |
+| [デイリーブリーフ](./workflow-daily-brief.md) | 自分の持ち高、発動した注文、フォローの動き、動いたもの |
+| [トレーダー評価](./workflow-trader-profile.md) | 追随すべきか: 実績、集中度、約定可能性 |
+| [ポジションのリスク](./workflow-position-risk.md) | 保護のない保有はどれか、どの損切りを提案するか |
+| [市場の機会](./workflow-market-opportunities.md) | 全チェーンから絞った候補リスト |
+| [ポートフォリオ review](./workflow-portfolio-review.md) | 保有、損益、そして何がそれを動かしているか |
+| [クリエイター収益](./workflow-creator-earnings.md) | 何を得たか、なぜまだ届かないか |
 
 ## コマンド
 
 コマンドとオプション自体は翻訳しません。完全な一覧は英語版の
-[Readme.md](./Readme.md#commands) にあります。手元で見るには:
+[Readme.md](../Readme.md#commands) にあります。手元で見るには:
 
 ```bash
 moonrush-cli --help
@@ -158,7 +158,7 @@ moonrush-cli config --apply-key <key id>.<secret>
 `token verified`、`token check`、`market config` は資格情報をまったく必要としません。
 
 **環境変数、コンテナや CI 向け。** 設定ファイルなしで同じ資格情報を使い、両方ある場合は環境変数が
-優先されます。[.env.example](./.env.example) を `~/.config/moonrush/.env` にコピーするか、
+優先されます。[.env.example](../.env.example) を `~/.config/moonrush/.env` にコピーするか、
 export してください。
 
 | 変数 | 内容 |

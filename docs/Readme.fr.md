@@ -2,7 +2,7 @@
 
 ![Moonrush Agent Skills](https://raw.githubusercontent.com/moonrush-app/moonrush-skills/main/static/moonrush-skills.png)
 
-[English](./Readme.md) ·
+[English](../Readme.md) ·
 [简体中文](./Readme.zh-CN.md) ·
 **Français** ·
 [한국어](./Readme.ko.md) ·
@@ -36,7 +36,7 @@ bracket qui placent les deux sorties en une seule fois, et le côté portefeuill
 soldes, la valeur dans le temps, les dépôts et l'activité. Chaque chemin qui dépense cote
 d'abord, montre les chiffres, et demande à la personne devant le terminal.
 
-> Le [Readme.md](./Readme.md) anglais est la seule version de référence. En cas de divergence,
+> Le [Readme.md](../Readme.md) anglais est la seule version de référence. En cas de divergence,
 > c'est lui qui fait foi.
 
 ## Installation
@@ -57,9 +57,9 @@ Claude Code et tout hôte qui lit un `.claude-plugin` : la commande ci-dessus su
 | Hôte | Installation |
 |---|---|
 | Claude Code, Codex, OpenCode, Cursor | `npx skills add moonrush-app/moonrush-skills` |
-| Codex, à la main | [.codex/INSTALL.md](./.codex/INSTALL.md) |
-| OpenCode, à la main | [.opencode/INSTALL.md](./.opencode/INSTALL.md) |
-| Cursor | le paquet contient [.cursor-plugin/plugin.json](./.cursor-plugin/plugin.json) ; pointez Cursor sur ce dépôt ou sur le paquet npm installé |
+| Codex, à la main | [.codex/INSTALL.md](../.codex/INSTALL.md) |
+| OpenCode, à la main | [.opencode/INSTALL.md](../.opencode/INSTALL.md) |
+| Cursor | le paquet contient [.cursor-plugin/plugin.json](../.cursor-plugin/plugin.json) ; pointez Cursor sur ce dépôt ou sur le paquet npm installé |
 
 ## Demander en langage naturel
 
@@ -77,7 +77,7 @@ et c'est lui qui choisit la compétence et les commandes :
 | « Lis-moi ce graphique » | `moonrush-kline-pattern` |
 | « Achète 25 $ de `<token>` » | `moonrush-token-buy` : résoudre, diligence rapide, dimensionner, coter, puis il vous demande |
 | « Achète 50 $ de X, take-profit à +40 %, stop à -20 % » | `moonrush-bracket` : l'achat, puis les deux sorties |
-| « Quelles positions n'ont pas de stop-loss ? » | le workflow [risque des positions](./docs/workflow-position-risk.md) |
+| « Quelles positions n'ont pas de stop-loss ? » | le workflow [risque des positions](./workflow-position-risk.md) |
 | « Qu'ont rapporté mes appels, et pourquoi ce n'est pas arrivé ? » | `moonrush-rewards` |
 
 Rien qui dépense de l'argent ne se produit sur une simple phrase. Les compétences cotent
@@ -111,18 +111,18 @@ Des recettes en plusieurs étapes qui enchaînent les commandes jusqu'à une ré
 
 | Workflow | Pour |
 |---|---|
-| [Recherche sur un token](./docs/workflow-token-research.md) | D'un nom ou d'une adresse à ce qui mérite d'être dit |
-| [Brief quotidien](./docs/workflow-daily-brief.md) | Vos positions, les ordres déclenchés, ce qu'ont fait vos abonnements, ce qui a bougé |
-| [Profil d'un trader](./docs/workflow-trader-profile.md) | Faut-il le copier : palmarès, concentration, capacité d'exécution |
-| [Risque des positions](./docs/workflow-position-risk.md) | Quelles positions sont sans protection, et quels stops proposer |
-| [Opportunités de marché](./docs/workflow-market-opportunities.md) | Une liste filtrée sur toutes les chaînes |
-| [Revue de portefeuille](./docs/workflow-portfolio-review.md) | Positions, PnL, et ce qui l'explique |
-| [Gains de créateur](./docs/workflow-creator-earnings.md) | Ce qu'un créateur a gagné, et pourquoi ce n'est pas arrivé |
+| [Recherche sur un token](./workflow-token-research.md) | D'un nom ou d'une adresse à ce qui mérite d'être dit |
+| [Brief quotidien](./workflow-daily-brief.md) | Vos positions, les ordres déclenchés, ce qu'ont fait vos abonnements, ce qui a bougé |
+| [Profil d'un trader](./workflow-trader-profile.md) | Faut-il le copier : palmarès, concentration, capacité d'exécution |
+| [Risque des positions](./workflow-position-risk.md) | Quelles positions sont sans protection, et quels stops proposer |
+| [Opportunités de marché](./workflow-market-opportunities.md) | Une liste filtrée sur toutes les chaînes |
+| [Revue de portefeuille](./workflow-portfolio-review.md) | Positions, PnL, et ce qui l'explique |
+| [Gains de créateur](./workflow-creator-earnings.md) | Ce qu'un créateur a gagné, et pourquoi ce n'est pas arrivé |
 
 ## Commandes
 
 Les commandes et leurs options ne se traduisent pas. La référence complète est dans le
-[Readme.md](./Readme.md#commands) anglais, ou directement :
+[Readme.md](../Readme.md#commands) anglais, ou directement :
 
 ```bash
 moonrush-cli --help
@@ -168,7 +168,7 @@ qui appartiennent les données renvoyées.
 
 **Variables d'environnement, pour un conteneur ou une CI.** Les mêmes identifiants sans fichier
 de configuration, et elles l'emportent sur le fichier quand les deux existent. Copiez
-[.env.example](./.env.example) vers `~/.config/moonrush/.env`, ou exportez-les :
+[.env.example](../.env.example) vers `~/.config/moonrush/.env`, ou exportez-les :
 
 | Variable | Ce que c'est |
 |---|---|
