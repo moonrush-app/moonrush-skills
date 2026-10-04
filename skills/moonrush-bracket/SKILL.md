@@ -104,5 +104,5 @@ Then `moonrush-cli orders list --raw` is how they check later, and
 
 It is not a strategy. It places what the user asked for, in an order that fails safely, and
 tells them what happened. For choosing the levels, the material is in `moonrush-token-dd`
-(what the token is) and `moonrush-kline-pattern` (where price has turned before) — both
-read-only, both for the user to read before deciding.
+(what the token is) and `moonrush-kline-pattern` (where price has turned before). Both are
+read-only, and both are for the user to read before deciding.
