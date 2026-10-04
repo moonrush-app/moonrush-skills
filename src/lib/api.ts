@@ -134,9 +134,13 @@ async function request<T>(path: string, opts: Options): Promise<T> {
   // fewer things to get wrong.
   if (!opts.anonymous) {
     if (!cfg.apiKey) {
+      // CODED, so the top-level handler can tell "you have no key" apart from "your key
+      // was refused". Without the code both arrive as a bare 401 and the first-run user is
+      // told to check the tier of a key they have not made yet.
       throw new ApiError(
         "No API key configured. Run `moonrush-cli config` for how to get one.",
         401,
+        "NO_KEY_CONFIGURED",
       );
     }
     return requestWithApiKey<T>(path, opts);

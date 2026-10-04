@@ -231,3 +231,31 @@ describe("send", () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 });
+
+/**
+ * The two 401s, which are not the same problem.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────────────────
+ * Found by running a trade-tier command on a machine with no credentials at all, which is
+ * where every first-time user starts. The answer was "401. This key is not usable for that
+ * call. Check its tier." There was no key to check the tier of. One handler had been
+ * collapsed into another and swallowed the better message underneath it.
+ */
+describe("a 401 with no key is not a 401 with a bad key", () => {
+  test("the no-key error carries a code, so the two can be told apart", async () => {
+    const src = await Bun.file(
+      new URL("../lib/api.ts", import.meta.url),
+    ).text();
+    expect(src).toContain('"NO_KEY_CONFIGURED"');
+    expect(src).toContain("No API key configured");
+  });
+
+  test("the top-level handler branches on it rather than printing one message", async () => {
+    const src = await Bun.file(
+      new URL("../index.ts", import.meta.url),
+    ).text();
+    expect(src).toContain('err.code === "NO_KEY_CONFIGURED"');
+    // The other branch still exists: a key that WAS sent and refused needs the tier advice.
+    expect(src).toContain("Check its tier at https://moonrush.space/ai/keys");
+  });
+});

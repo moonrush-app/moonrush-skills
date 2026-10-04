@@ -122,13 +122,20 @@ main()
       return exit(1);
     }
     if (err instanceof ApiError && err.isExpiredAuth) {
-      // A key does not expire, so a 401 here is a key that was revoked, mistyped, or is
-      // missing the tier this call needs. Nothing retries on its own: the fix is a key, and
-      // the message is the command that applies one.
+      /**
+       * TWO DIFFERENT 401s, AND TELLING THEM APART IS THE WHOLE POINT OF THIS BRANCH.
+       *
+       * Having no key at all is where every first-run user starts, and sending them to
+       * "check the tier of your key" is advice about a key they have not made. The other
+       * 401 is a key that exists and was refused: revoked, mistyped, or below the tier the
+       * call needs. One message for both was wrong for the person most likely to see it.
+       */
       process.stderr.write(
-        "401. This key is not usable for that call.\n" +
-          "Check its tier at https://moonrush.space/ai/keys, or apply another:\n" +
-          "  moonrush-cli config --apply-key <key id>.<secret>\n",
+        err.code === "NO_KEY_CONFIGURED"
+          ? `${err.message}\n`
+          : "401. This key is not usable for that call.\n" +
+              "Check its tier at https://moonrush.space/ai/keys, or apply another:\n" +
+              "  moonrush-cli config --apply-key <key id>.<secret>\n",
       );
       return exit(1);
     }

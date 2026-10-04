@@ -55,6 +55,7 @@ export async function runConfig(
   const applyKey = flags["apply-key"];
   if (typeof applyKey === "string") {
     const key = applyKey.trim();
+
     if (!/^[a-f0-9]{32}\.[A-Za-z0-9_-]{20,}$/.test(key)) {
       process.stderr.write(
         "That does not look like an API key. It is `<key id>.<secret>`, exactly as the\n" +

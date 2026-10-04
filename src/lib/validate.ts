@@ -268,6 +268,30 @@ export function checkFlags(
   if (unknown.length === 0) return;
 
   const lines = unknown.map((f) => {
+    /**
+     * ⚠️ A PEM BODY ARRIVES HERE AS A FLAG NAME, because it starts with dashes.
+     *
+     * Somebody running `config --apply-key -----BEGIN PRIVATE KEY-----…` has pasted the
+     * wrong half of their keypair, and that is the most damaging confusion available on
+     * this tool: the two files sit next to each other and only one of them is ever meant
+     * to be handed over. "is not a flag" would send them back to find a better copy of the
+     * wrong file. Named here rather than in `config`, because the parser refuses it before
+     * any command sees it.
+     */
+    if (/^-*BEGIN [A-Z ]*PRIVATE KEY/.test(f)) {
+      return (
+        "  That is a PRIVATE KEY. Do not paste it anywhere, including here.\n" +
+        "  It stays in its own file and is never handed over; the API key is\n" +
+        "  `<key id>.<secret>`, which the console prints once."
+      );
+    }
+    if (/^-*BEGIN [A-Z ]*PUBLIC KEY/.test(f)) {
+      return (
+        "  That is the PUBLIC key. It goes in the console at\n" +
+        "  https://moonrush.space/ai/keys, not on the command line. What comes back\n" +
+        "  from there is the API key to apply."
+      );
+    }
     const exact = lower.get(f.toLowerCase());
     if (exact) return `  --${f} is not a flag. Did you mean --${exact}?`;
     const near = known

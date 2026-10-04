@@ -116,3 +116,48 @@ describe("one flag name, two meanings", () => {
     expect(flags.refresh).toBe("x");
   });
 });
+
+/**
+ * Pasting the wrong half of the keypair.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────────────────
+ * Found by running the CLI as a first-time user would. `config --apply-key <a PEM>` reaches
+ * the parser, not the command, because a PEM starts with dashes and therefore looks like a
+ * flag name. The old answer was "is not a flag", which sends somebody back to look for a
+ * better copy of the file they should not have opened at all.
+ *
+ * This is the most damaging confusion available on this tool: the private key and the API
+ * key live next to each other and exactly one of them is ever meant to leave the machine.
+ */
+describe("a PEM pasted where a flag goes", () => {
+  const check = (arg: string) => {
+    try {
+      checkFlags({ [arg]: true }, ["apply-key"], "config");
+      return "";
+    } catch (e) {
+      return e instanceof Error ? e.message : String(e);
+    }
+  };
+
+  test("a private key is NAMED, not called an unknown flag", () => {
+    const m = check("---BEGIN PRIVATE KEY-----\nMC4CAQ");
+    expect(m).toContain("That is a PRIVATE KEY");
+    expect(m).toContain("Do not paste it anywhere");
+    expect(m).not.toContain("Did you mean");
+  });
+
+  test("an RSA private key is caught too, not just the PKCS#8 wording", () => {
+    expect(check("---BEGIN RSA PRIVATE KEY-----")).toContain("PRIVATE KEY");
+    expect(check("---BEGIN EC PRIVATE KEY-----")).toContain("PRIVATE KEY");
+  });
+
+  test("the public half gets its own answer, because it is not a mistake to own", () => {
+    const m = check("---BEGIN PUBLIC KEY-----\nMCowBQ");
+    expect(m).toContain("That is the PUBLIC key");
+    expect(m).toContain("moonrush.space/ai/keys");
+  });
+
+  test("an ordinary typo still gets its suggestion", () => {
+    expect(check("apply-ke")).toContain("Did you mean --apply-key?");
+  });
+});
