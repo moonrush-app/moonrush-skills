@@ -1,8 +1,6 @@
 <div align="center">
 
-# Moonrush Agent Skills
-
-![Moonrush skills](https://raw.githubusercontent.com/moonrush-app/moonrush-skills/main/static/moonrush-skills.png)
+![Moonrush Agent Skills](https://raw.githubusercontent.com/moonrush-app/moonrush-skills/main/static/moonrush-skills.png)
 
 [English](./Readme.md) ·
 **简体中文** ·
