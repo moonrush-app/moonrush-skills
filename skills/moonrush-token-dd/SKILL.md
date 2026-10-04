@@ -7,8 +7,7 @@ metadata:
 ---
 
 **BEFORE ANYTHING ELSE: run `moonrush-cli config --check`.** Exit 1 means no working
-credentials: point the user at `moonrush-cli login` or an API key from
-https://moonrush.space/ai/keys and stop.
+credentials: point the user at an API key from https://moonrush.space/ai/keys and stop.
 
 This skill only reads. It produces a verdict, never a trade. If the user then wants to buy,
 that is `moonrush-trade`, and it needs their explicit instruction and size.

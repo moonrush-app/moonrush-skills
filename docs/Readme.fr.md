@@ -131,17 +131,13 @@ moonrush-cli <commande> --help
 
 ## Authentification
 
-Deux entrées, pour deux machines différentes.
+**Une seule entrée : une clé API.** Elle fonctionne pareil sur un portable, un serveur, en CI
+et dans un agent, et elle n'expire pas.
 
-**Un navigateur, pour votre portable.**
-
-```bash
-moonrush-cli login
-```
-
-Un clic. La session dure environ une heure et se renouvelle tant qu'elle vit.
-
-**Une clé API, pour un serveur, une CI ou un agent.** Sans navigateur, sans expiration.
+La connexion par navigateur qu'elle remplace gardait une session Privy sur le disque, c'est-à-
+dire un jeton de rafraîchissement longue durée vers un compte entier dans un fichier. Une clé
+est limitée à `read` ou `read` + `trade`, révocable depuis la console, et signée par une moitié
+privée générée localement et jamais envoyée.
 
 ```bash
 moonrush-cli config --generate-key     # paire de clés, la moitié privée reste ici en mode 600

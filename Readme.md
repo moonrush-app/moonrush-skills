@@ -153,17 +153,13 @@ Every command prints JSON on stdout and takes `--raw` for one line. Full referen
 
 ## Auth
 
-Two ways in, and they are for different machines.
+**One way in: an API key.** It works the same on a laptop, a server, in CI and inside an
+agent, and it does not expire.
 
-**A browser, for your laptop.**
-
-```bash
-moonrush-cli login
-```
-
-One click. The session lasts about an hour and renews itself while it lives.
-
-**An API key, for a server, CI, or an agent.** No browser, no expiry.
+The browser sign-in this replaced kept a Privy session on disk, which meant a long-lived
+refresh token to a whole account in a file. A key is scoped to `read` or `read` + `trade`,
+revocable from the console, and signed by a private half that is generated locally and never
+uploaded.
 
 ```bash
 moonrush-cli config --generate-key     # keypair, private half stays here at mode 600

@@ -7,14 +7,12 @@ metadata:
 ---
 
 **BEFORE ANYTHING ELSE: run `moonrush-cli config --check`.** Exit 0, carry on. Exit 1,
-there are no working credentials: show the user the two ways to get some and stop.
+there are no working credentials: show the user how to get one and stop.
 
-  - `moonrush-cli login` opens a browser. Fastest, but needs one on this machine, and the
-    session lasts about an hour.
-  - An API key from https://moonrush.space/ai/keys does not need a browser and does not
-    expire. Trading needs the key's "Trading and private data" tier. Run
-    `moonrush-cli config --generate-key`, paste the PUBLIC key it prints into that page,
-    then `moonrush-cli config --apply-key <key>`.
+  An API key from https://moonrush.space/ai/keys, and trading needs its "Trading and private
+  data" tier. Run `moonrush-cli config --generate-key`, paste the PUBLIC key it prints into
+  that page, then `moonrush-cli config --apply-key <key>`. The private half stays on the
+  machine, and the key does not expire.
 
 If the command is not found, tell them to run `npm install -g moonrush-cli`.
 

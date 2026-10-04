@@ -1,7 +1,7 @@
 {
   "name": "moonrush-cli",
   "description": "Moonrush skills: token lookup and the Verified roster, discovery boards across Solana / Robinhood / Base / BNB / Soneium / Arc, wallets and portfolios, positions and leaderboards, holder, dev and wallet research, smart money, creator rewards, and trading with limit, take-profit and stop-loss orders",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "author": { "name": "Moonrush" },
   "homepage": "https://moonrush.space",
   "repository": "https://github.com/moonrush-app/moonrush-skills",

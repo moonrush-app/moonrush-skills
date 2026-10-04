@@ -11,38 +11,25 @@ import { generateKeypair, loadPrivateKey, PRIVATE_KEY_PATH } from "../lib/keypai
  * nothing more, so the honest instruction is "copy it from a place you are already signed
  * in", and the honest warning is that it expires.
  */
-const HOW_TO = `Moonrush authenticates with Privy. The CLI keeps a Privy SESSION, not just a
-token: given a refresh token it mints new access tokens itself, so it keeps working for as
-long as the session lives rather than for the hour an access token lasts.
+const HOW_TO = `Moonrush authenticates with an API KEY, made at
+https://moonrush.space/ai/keys. There is no browser sign-in here any more: a Privy session
+meant a long-lived refresh token to a whole account sitting in a file, and a key is scoped,
+revocable from that page, and signed by a private half that never leaves this machine.
 
-Open this in a browser where you are signed in:
+  moonrush-cli config --generate-key                  # keypair, private half stays here
+  # paste the PUBLIC key at https://moonrush.space/ai/keys
+  moonrush-cli config --apply-key <key id>.<secret>
 
-  https://app.moonrush.space/cli
-
-It shows the whole \`config --apply\` command with a copy button. Paste it here.
-
-⚠️ That page displays a LONG-LIVED credential. Do not screen share it, and do not paste
-the command anywhere but your own terminal.
-
-If you would rather read the values yourself, they are in the POST to
-auth.privy.io/api/v1/sessions: \`privy_access_token\` and \`refresh_token\` in the
-response, \`privy-app-id\` and \`privy-client-id\` in the request headers.
-
-  moonrush-cli config --apply <ACCESS_TOKEN> \\
-    --refresh <REFRESH_TOKEN> --app-id <APP_ID> --client-id <CLIENT_ID> \\
-    --origin https://app.moonrush.space
-
-Stored at ~/.config/moonrush/.env, mode 600.
-
-The access token alone also works, and gives you about an hour before commands start
-answering 401. The refresh token is what removes that.`;
+Keys have two tiers. \`read\` is public market data and needs only the key id. Anything that
+is one person's (wallet, positions, earnings, trading) needs "Trading and private data" on the
+key AND the signing keypair above.`;
 
 export async function runConfig(
   flags: Record<string, string | true>,
 ): Promise<number> {
   checkFlags(
     flags,
-    ["apply", "refresh", "app-id", "client-id", "origin", "check", "generate-key", "force", "apply-key"],
+    ["check", "generate-key", "force", "apply-key"],
     "config",
   );
 
@@ -126,53 +113,6 @@ export async function runConfig(
     return 0;
   }
 
-  const apply = flags.apply;
-  if (typeof apply === "string") {
-    const token = apply.trim().replace(/^Bearer\s+/i, "");
-    if (!token) {
-      process.stderr.write("A token is required: --apply <TOKEN>\n");
-      return 1;
-    }
-
-    const str = (v: unknown) => (typeof v === "string" ? v.trim() : undefined);
-    saveConfig({
-      MOONRUSH_TOKEN: token,
-      MOONRUSH_REFRESH_TOKEN: str(flags.refresh),
-      MOONRUSH_PRIVY_APP_ID: str(flags["app-id"]),
-      MOONRUSH_PRIVY_CLIENT_ID: str(flags["client-id"]),
-      // The origin the tokens were issued to. Privy checks it and answers
-      // `403 Origin not allowed` on a mismatch, so it belongs beside the tokens rather
-      // than in a default that has to be right for everybody.
-      MOONRUSH_PRIVY_ORIGIN: str(flags.origin),
-    });
-
-    // VERIFIED, not just stored. Writing a bad token and reporting success moves the
-    // failure to whichever command runs next, where it reads as that command being broken.
-    try {
-      const me = await api<{ userId?: string; username?: string }>("/users");
-      const cfg = loadConfig();
-      const renewable = Boolean(
-        cfg.refreshToken && cfg.privyAppId && cfg.privyClientId,
-      );
-      process.stdout.write(
-        `Saved to ${CONFIG_FILE}\n` +
-          `Verified as ${me.username ? "@" + me.username : (me.userId ?? "an account")}\n` +
-          (renewable
-            ? "Session renews itself; no need to sign in again while it lives.\n"
-            : "⚠️ No refresh token stored. This will stop working in about an hour.\n" +
-              "   Re-run with --refresh, --app-id and --client-id to keep it alive.\n"),
-      );
-      return 0;
-    } catch (e) {
-      process.stderr.write(
-        `Saved to ${CONFIG_FILE}, but the token did not work: ${
-          e instanceof Error ? e.message : String(e)
-        }\n`,
-      );
-      return 1;
-    }
-  }
-
   /**
    * `--check` exists for the SKILL, not for a person: an agent runs it first and branches
    * on the exit code rather than parsing prose.
@@ -188,7 +128,7 @@ export async function runConfig(
    */
   if (flags.check) {
     const cfg = loadConfig();
-    if (!cfg.token && !cfg.apiKey) return 1;
+    if (!cfg.apiKey) return 1;
     try {
       await api("/config");
       process.stdout.write("ok\n");
@@ -203,21 +143,9 @@ export async function runConfig(
   process.stdout.write(
     `${HOW_TO}\n\nCurrent:\n` +
       `  api      ${cfg.apiBase}\n` +
-      `  origin   ${cfg.privyOrigin}\n` +
       `  gateway  ${cfg.gatewayBase}\n` +
-      `  api key  ${cfg.apiKey ? `set (${cfg.apiKey.split(".")[0]}…)` : "not set"}\n` +
-      `  signing  ${loadPrivateKey() ? PRIVATE_KEY_PATH : "no key generated"}\n` +
-      `  token    ${cfg.token ? `set (${cfg.token.slice(0, 12)}…)` : "NOT SET"}\n` +
-      // Three states, not two. With no token at all there is nothing to expire, and
-      // saying "expires in about an hour" about it sends the reader looking for a token
-      // that was never there.
-      `  renews   ${
-        cfg.refreshToken && cfg.privyAppId && cfg.privyClientId
-          ? "yes, refresh token stored"
-          : cfg.token
-            ? "NO, this access token expires in about an hour"
-            : "-"
-      }\n`,
+      `  api key  ${cfg.apiKey ? `set (${cfg.apiKey.split(".")[0]}…)` : "NOT SET"}\n` +
+      `  signing  ${loadPrivateKey() ? PRIVATE_KEY_PATH : "no key generated"}\n`,
   );
   return 0;
 }

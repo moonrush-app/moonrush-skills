@@ -10,13 +10,7 @@ moonrush-cli config --check     # exit 0 if anything works, else 1
 moonrush-cli config             # what is configured now
 ```
 
-**Browser sign-in.** Needs a browser on this machine; the session lasts about an hour.
-
-```bash
-moonrush-cli login
-```
-
-**API key.** No browser, no expiry. The only option on a server or in CI.
+**API key.** The only credential. No browser, no expiry, same on a laptop and in CI.
 
 ```bash
 moonrush-cli config --generate-key

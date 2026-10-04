@@ -1,5 +1,4 @@
-import { loadConfig, saveConfig } from "./config.js";
-import { PrivyAuthExpired, refreshPrivySession } from "./privy.js";
+import { loadConfig } from "./config.js";
 import { loadPrivateKey } from "./keypair.js";
 import { signRequest } from "./sign.js";
 
@@ -37,35 +36,8 @@ interface Options {
   anonymous?: boolean;
 }
 
-/**
- * Mint a new access token from the stored refresh token, and keep it.
- *
- * Returns null when there is nothing to refresh WITH, which is a different situation from a
- * refresh that failed: the first needs credentials, the second needs a sign-in.
- */
-async function tryRefresh(): Promise<string | null> {
-  const cfg = loadConfig();
-  if (!cfg.refreshToken || !cfg.privyAppId || !cfg.privyClientId) return null;
-
-  const session = await refreshPrivySession({
-    refreshToken: cfg.refreshToken,
-    accessToken: cfg.token,
-    appId: cfg.privyAppId,
-    clientId: cfg.privyClientId,
-    origin: cfg.privyOrigin,
-  });
-
-  saveConfig({
-    MOONRUSH_TOKEN: session.accessToken,
-    // ONLY when Privy sent a new one. On `ignore` it did not, and `saveConfig` skips
-    // undefined rather than clearing the field, which is the whole reason it merges.
-    MOONRUSH_REFRESH_TOKEN: session.refreshToken ?? undefined,
-  });
-  return session.accessToken;
-}
-
 export async function api<T>(path: string, opts: Options = {}): Promise<T> {
-  return request<T>(path, opts, true);
+  return request<T>(path, opts);
 }
 
 /**
@@ -149,47 +121,36 @@ async function requestWithApiKey<T>(path: string, opts: Options): Promise<T> {
   return envelope as T;
 }
 
-async function request<T>(
-  path: string,
-  opts: Options,
-  mayRefresh: boolean,
-): Promise<T> {
+async function request<T>(path: string, opts: Options): Promise<T> {
   const cfg = loadConfig();
 
-  // AN API KEY WINS when one is configured. The exception this used to carry was the admin
-  // console, reached through its own base: nothing ever set `admin: true`, so the option, the
-  // base and its default URL were removed rather than left as a second origin this client
-  // could be pointed at.
-  if (cfg.apiKey && !opts.anonymous) {
+  // AN API KEY OR NOTHING. This used to carry a second path: a Privy access token in a
+  // bearer header, refreshed from a stored refresh token when it expired. That meant a
+  // long-lived credential to somebody's whole account sitting in a file on disk, which the
+  // console never needs to issue: an API key is scoped, revocable from a page, and its
+  // signing half is generated locally and never uploaded.
+  //
+  // The admin origin went the same way in 0.5.3, for the same reason: fewer ways in is
+  // fewer things to get wrong.
+  if (!opts.anonymous) {
+    if (!cfg.apiKey) {
+      throw new ApiError(
+        "No API key configured. Run `moonrush-cli config` for how to get one.",
+        401,
+      );
+    }
     return requestWithApiKey<T>(path, opts);
   }
 
-  const base = cfg.apiBase;
-
-  if (!opts.anonymous && !cfg.token) {
-    // No access token at all, but possibly a refresh token: mint one rather than telling
-    // somebody to go and paste what we can fetch ourselves.
-    if (mayRefresh) {
-      const minted = await tryRefresh().catch(() => null);
-      if (minted) return request<T>(path, opts, false);
-    }
-    throw new ApiError(
-      "No token configured. Run `moonrush-cli config` for how to get one.",
-      401,
-    );
-  }
-
-  const res = await fetch(`${base}${path}`, {
+  // The anonymous routes (`token verified`, `token check`, `market config`) go straight to
+  // the API with no credential at all, which is what makes them the way to check that the
+  // CLI can reach it.
+  const res = await fetch(`${cfg.apiBase}${path}`, {
     method: opts.method ?? "GET",
-    headers: {
-      ...(opts.anonymous ? {} : { authorization: `Bearer ${cfg.token}` }),
-      ...(opts.body ? { "content-type": "application/json" } : {}),
-    },
+    headers: opts.body ? { "content-type": "application/json" } : {},
     body: opts.body ? JSON.stringify(opts.body) : undefined,
     // NEVER `credentials: "include"`. The backend sends `origin: "*"` with
-    // `credentials: true`, a combination browsers refuse outright; auth travels in the
-    // header and a reflex to add cookies here would break nothing visibly and confuse
-    // anybody reading a failed request later.
+    // `credentials: true`, a combination browsers refuse outright.
   });
 
   const text = await res.text();
@@ -210,37 +171,6 @@ async function request<T>(
     responseObject?: unknown;
     error?: unknown;
   } | null;
-
-  // ONE retry, and only on a 401. An access token expiring mid-session is the ordinary
-  // case, not an error worth surfacing; anything else is a real failure and retrying it
-  // would just take twice as long to report.
-  if (res.status === 401 && mayRefresh && !opts.anonymous) {
-    try {
-      const minted = await tryRefresh();
-      if (minted) return request<T>(path, opts, false);
-    } catch (e) {
-      if (e instanceof PrivyAuthExpired) {
-        throw new ApiError(e.message, 401, "PRIVY_SESSION_ENDED");
-      }
-      /**
-       * ⚠️ SAY WHY THE REFRESH FAILED. This used to fall through to the original 401 on the
-       * reasoning that it was "the more useful of the two messages". It was not.
-       *
-       * The refresh was answering `403 Origin not allowed` for every session taken from the
-       * web app, because the default origin named the mobile client. That is a one-line
-       * fix and the message says exactly which line. Swallowed, it surfaced as
-       * "401. No usable credentials. Run: moonrush-cli config", which sends the reader to
-       * re-paste credentials that were never the problem, and to do it again the next time.
-       *
-       * The 401 is still printed underneath, because it is also true.
-       */
-      process.stderr.write(
-        `Could not refresh the session: ${
-          e instanceof Error ? e.message : String(e)
-        }\n`,
-      );
-    }
-  }
 
   if (!res.ok || body?.ok === false || body?.success === false) {
     const err = body?.error;

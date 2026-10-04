@@ -7,8 +7,7 @@ metadata:
 ---
 
 **BEFORE ANYTHING ELSE: run `moonrush-cli config --check`.** Exit 1 means no working
-credentials: point the user at `moonrush-cli login` or an API key from
-https://moonrush.space/ai/keys and stop. The key needs the "Trading and private data" tier.
+credentials: point the user at an API key from https://moonrush.space/ai/keys and stop. The key needs the "Trading and private data" tier.
 
 ⚠️ **This skill ends in a trade only when the user asked to buy, in this conversation, in
 their own words, with a size.** "What about X?" is a research question: stop after step 3.

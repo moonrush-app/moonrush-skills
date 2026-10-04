@@ -80,14 +80,17 @@ erroring. And `/proxy/tokenDetails` takes its argument as a single `tokenId` str
 
 ## Prerequisites
 
-Two credentials, and they are for different machines.
+One credential, and it works everywhere.
 
-**Browser session.** `moonrush-cli login` opens a browser, one click, lasts about an hour.
-Needs a browser on the same machine, so it is not an option on a server or in CI.
+The browser sign-in is gone as of 0.5.4: it kept a Privy session on disk, which is a
+long-lived refresh token to a whole account in a file, and the console can issue something
+better. `login`, `src/lib/privy.ts` and the refresh path in `api.ts` went with it, and
+`request()` is now two branches: a signed key, or an anonymous call to the three public
+routes.
 
 **API key.** `moonrush-cli config --generate-key`, paste the PUBLIC key at
 https://moonrush.space/ai/keys, then `moonrush-cli config --apply-key <key>`. No browser,
-no expiry. When one is configured it is used instead of the session, and every request is
+no expiry. Every request is
 signed with the local private key.
 
 `moonrush-cli config --check` answers "is anything working" with an exit code, and it is

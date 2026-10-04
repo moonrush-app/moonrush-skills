@@ -4,7 +4,6 @@ import { parseArgs, print } from "./lib/args.js";
 import { InvalidArgument } from "./lib/validate.js";
 import { Refused } from "./lib/confirm.js";
 import { runConfig } from "./commands/config.js";
-import { runLogin } from "./commands/login.js";
 import { runToken } from "./commands/token.js";
 import { runMarket } from "./commands/market.js";
 import { runWallet } from "./commands/wallet.js";
@@ -17,7 +16,6 @@ import { runFeed, runFollow, runMooncall } from "./commands/social.js";
 
 const USAGE = `moonrush-cli <command> [options]
 
-  login                  Sign in through a browser. Start here.
   config                 Show credentials, or set them by hand
   token <sub>            Token detail, search, and the Verified roster
   market <sub>           Discovery boards and the live fee config
@@ -35,7 +33,7 @@ Run a command with --help for its sub-commands.
 Every command prints JSON on stdout and takes --raw for one line. Errors go to
 stderr and exit 1.
 
-Not signed in? Run: moonrush-cli login
+No API key yet? Run: moonrush-cli config
 
 These three work with no token at all, so you can check the CLI reaches the API:
   moonrush-cli market config
@@ -53,8 +51,6 @@ async function main(): Promise<number> {
   }
 
   switch (command) {
-    case "login":
-      return runLogin(flags);
     case "config":
       return runConfig(flags);
     case "token":
@@ -128,9 +124,9 @@ main()
       process.stderr.write(
         err.code === "PRIVY_SESSION_ENDED"
           ? "401. Privy ended this session.\n" +
-              "Sign in again: moonrush-cli login\n"
+              "Apply a key again: moonrush-cli config --apply-key <key id>.<secret>\n"
           : "401. The session is not usable.\n" +
-              "Sign in again: moonrush-cli login\n",
+              "Apply a key again: moonrush-cli config --apply-key <key id>.<secret>\n",
       );
       return exit(1);
     }

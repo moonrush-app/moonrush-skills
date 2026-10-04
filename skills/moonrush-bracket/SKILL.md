@@ -7,8 +7,7 @@ metadata:
 ---
 
 **BEFORE ANYTHING ELSE: run `moonrush-cli config --check`.** Exit 1 means no working
-credentials: point the user at `moonrush-cli login` or an API key from
-https://moonrush.space/ai/keys and stop. The key needs the "Trading and private data" tier.
+credentials: point the user at an API key from https://moonrush.space/ai/keys and stop. The key needs the "Trading and private data" tier.
 
 ⚠️ **THREE SEPARATE ACTIONS, NOT ONE TRANSACTION.** The buy settles on chain; the exits are
 standing orders created afterwards. Nothing makes them atomic, so the dangerous minute is

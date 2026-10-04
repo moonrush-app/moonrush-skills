@@ -46,9 +46,13 @@ beforeAll(async () => {
   process.env.HOME = mkdtempSync(join(tmpdir(), "mr-cli-"));
   process.env.XDG_CONFIG_HOME = process.env.HOME;
   process.env.MOONRUSH_CONFIG_DIR = join(process.env.HOME, "moonrush");
-  process.env.MOONRUSH_TOKEN = "test-session";
+  // AN API KEY, because that is the only credential the client takes now. It routes through
+  // the gateway rather than the API base, so both point at the one host this mock answers
+  // for; the assertion below that every request lands on `api.test` still holds.
+  process.env.MOONRUSH_API_KEY = "testkey.testsecret";
   process.env.MOONRUSH_API_BASE = "https://api.test";
-  delete process.env.MOONRUSH_API_KEY;
+  process.env.MOONRUSH_GATEWAY_BASE = "https://api.test";
+  delete process.env.MOONRUSH_TOKEN;
   ({ runOrders, priceString } = await import("./orders"));
   ({ runTrade } = await import("./trade"));
   ({ Refused } = await import("../lib/confirm"));

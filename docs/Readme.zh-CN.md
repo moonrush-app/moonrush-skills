@@ -121,17 +121,11 @@ moonrush-cli <命令> --help
 
 ## 认证
 
-两种方式，面向不同的机器。
+**只有一种方式：API key。** 笔记本、服务器、CI 和助手里都一样用，并且不会过期。
 
-**浏览器，用于你的笔记本。**
-
-```bash
-moonrush-cli login
-```
-
-一次点击。会话约一小时，存续期间自动续期。
-
-**API key，用于服务器、CI 或助手。** 无需浏览器，不过期。
+它取代的浏览器登录会把 Privy 会话留在磁盘上，也就是把一个能动整个账号的长期 refresh token 放进
+文件里。而 key 的范围限定为 `read` 或 `read` + `trade`，可在控制台吊销，签名用的私钥在本机生成、
+从不上传。
 
 ```bash
 moonrush-cli config --generate-key     # 生成密钥对，私钥留在本机，权限 600
