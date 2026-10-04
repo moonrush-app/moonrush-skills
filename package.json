@@ -1,6 +1,6 @@
 {
   "name": "moonrush-cli",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "description": "Moonrush API from the command line: tokens, discovery boards, wallets, trades, leaderboards and creator rewards",
   "type": "module",
   "bin": {
