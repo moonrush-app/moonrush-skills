@@ -47,7 +47,36 @@ moonrush-cli config
 npx skills add moonrush-app/moonrush-skills
 ```
 
-Codex: [.codex/INSTALL.md](./.codex/INSTALL.md). OpenCode: [.opencode/INSTALL.md](./.opencode/INSTALL.md).
+Claude Code를 비롯해 `.claude-plugin`을 읽는 호스트라면 위 명령 하나로 끝납니다.
+
+| 호스트 | 설치 |
+|---|---|
+| Claude Code, Codex, OpenCode, Cursor | `npx skills add moonrush-app/moonrush-skills` |
+| Codex, 수동 | [.codex/INSTALL.md](./.codex/INSTALL.md) |
+| OpenCode, 수동 | [.opencode/INSTALL.md](./.opencode/INSTALL.md) |
+| Cursor | 패키지에 [.cursor-plugin/plugin.json](./.cursor-plugin/plugin.json)이 들어 있습니다. Cursor가 이 저장소나 설치된 npm 패키지를 보도록 설정하세요 |
+
+## 자연어로 물어보기
+
+이 저장소의 핵심은 스킬입니다. 설치하고 나면 에이전트에게 말을 걸고, 스킬과 명령은 에이전트가
+고릅니다.
+
+| 이렇게 말하면 | 이것을 씁니다 |
+|---|---|
+| "PENGU 오늘 어때?" | `moonrush-token`, 그다음 차트와 위험 판정 |
+| "이 토큰 점수 내줘: `<주소>`" | `moonrush-token-dd`, 0에서 100, 깎인 이유를 하나씩 |
+| "누가 들고 있고, 얼마나 쏠려 있어?" | `moonrush-holder-analysis` |
+| "이 개발자가 전에 뭘 띄운 적 있어?" | `moonrush-dev-score` |
+| "이 지갑 따라갈 만해? `<주소>`" | `moonrush-wallet-score` |
+| "지금 잘하는 사람들이 뭘 들고 있어?" | `moonrush-smart-money` |
+| "이 차트 좀 읽어줘" | `moonrush-kline-pattern` |
+| "`<토큰>` 25달러어치 사줘" | `moonrush-token-buy`: 토큰 확정, 빠른 실사, 금액, 견적, 그리고 확인 요청 |
+| "X 50달러 사고 +40% 익절, -20% 손절" | `moonrush-bracket`: 매수, 그다음 양쪽 출구 |
+| "내 포지션 중에 손절 없는 건?" | [포지션 리스크](./docs/workflow-position-risk.md) 워크플로 |
+| "내 콜로 얼마 벌었고 왜 안 들어왔어?" | `moonrush-rewards` |
+
+말 한마디로 돈이 움직이는 일은 없습니다. 스킬은 먼저 견적을 내고 숫자를 보여주며 터미널에서 묻고,
+`--yes`를 넘기지 않도록 명시되어 있습니다.
 
 ## 스킬
 
@@ -128,6 +157,16 @@ moonrush-cli config --apply-key <key id>.<secret>
 
 `token verified`, `token check`, `market config`는 자격 증명이 전혀 필요하지 않습니다.
 
+**환경 변수, 컨테이너나 CI용.** 설정 파일 없이 같은 자격 증명을 쓰며, 둘 다 있으면 환경 변수가
+이깁니다. [.env.example](./.env.example)을 `~/.config/moonrush/.env`로 복사하거나 export 하세요.
+
+| 변수 | 설명 |
+|---|---|
+| `MOONRUSH_TOKEN` | 단기 액세스 토큰. 단독으로 약 한 시간 동작합니다. |
+| `MOONRUSH_REFRESH_TOKEN` | 장기 자격 증명. 이것이 있으면 CLI가 스스로 갱신하며 Privy 세션이 살아 있는 동안 계속 동작합니다. **비밀로 다루세요.** |
+| `MOONRUSH_PRIVY_APP_ID`, `MOONRUSH_PRIVY_CLIENT_ID` | 공개 값. Privy 세션 호출의 요청 헤더에서 가져옵니다. |
+| `MOONRUSH_API_BASE` | 선택. 기본값 `https://social.moonrush.space`. |
+
 ## 안전
 
 토큰의 이름·심볼·설명은 토큰을 배포한 사람이 직접 쓴 것이고, 에이전트용 CLI에서는 그것이 모델의
@@ -152,6 +191,16 @@ npm ci && npm run build && npm test
 
 CI는 Node 20과 24에서 빌드와 테스트를 돌리고, 각 스킬의 frontmatter가 디렉터리 이름과 일치하는지
 확인합니다.
+
+## 링크
+
+- 키를 만드는 콘솔: [moonrush.space/ai](https://moonrush.space/ai)
+- 릴리스와 변경 내역: [releases](https://github.com/moonrush-app/moonrush-skills/releases)
+- 문제가 있거나 원하는 명령이 있으면: [이슈 열기](https://github.com/moonrush-app/moonrush-skills/issues)
+- [X](https://x.com/moonrush_space) · [Discord](https://discord.gg/vD66uhAG3h) · [Telegram](https://t.me/moonrush_space_app)
+
+PR 환영합니다. 새 스킬에는 `name`이 디렉터리 이름과 일치하는 `SKILL.md`가 필요하고 CI가 이를
+확인하며, 이 저장소는 em dash를 쓰지 않고 그것도 CI가 확인합니다.
 
 ## 라이선스
 

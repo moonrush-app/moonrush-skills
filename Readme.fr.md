@@ -52,7 +52,37 @@ Comme plugin d'agent :
 npx skills add moonrush-app/moonrush-skills
 ```
 
-Codex : [.codex/INSTALL.md](./.codex/INSTALL.md). OpenCode : [.opencode/INSTALL.md](./.opencode/INSTALL.md).
+Claude Code et tout hôte qui lit un `.claude-plugin` : la commande ci-dessus suffit.
+
+| Hôte | Installation |
+|---|---|
+| Claude Code, Codex, OpenCode, Cursor | `npx skills add moonrush-app/moonrush-skills` |
+| Codex, à la main | [.codex/INSTALL.md](./.codex/INSTALL.md) |
+| OpenCode, à la main | [.opencode/INSTALL.md](./.opencode/INSTALL.md) |
+| Cursor | le paquet contient [.cursor-plugin/plugin.json](./.cursor-plugin/plugin.json) ; pointez Cursor sur ce dépôt ou sur le paquet npm installé |
+
+## Demander en langage naturel
+
+Les compétences sont la raison d'être de ce dépôt. Une fois installées, vous parlez à l'agent,
+et c'est lui qui choisit la compétence et les commandes :
+
+| Ce que vous dites | Ce qu'il utilise |
+|---|---|
+| « Que fait PENGU aujourd'hui ? » | `moonrush-token`, puis le graphique et le verdict de risque |
+| « Note ce token : `<adresse>` » | `moonrush-token-dd`, de 0 à 100, chaque point retiré justifié |
+| « Qui le détient, et à quel point c'est concentré ? » | `moonrush-holder-analysis` |
+| « Ce dev a-t-il déjà lancé quelque chose ? » | `moonrush-dev-score` |
+| « Ce portefeuille vaut-il d'être copié ? `<adresse>` » | `moonrush-wallet-score` |
+| « Que détiennent les meilleurs en ce moment ? » | `moonrush-smart-money` |
+| « Lis-moi ce graphique » | `moonrush-kline-pattern` |
+| « Achète 25 $ de `<token>` » | `moonrush-token-buy` : résoudre, diligence rapide, dimensionner, coter, puis il vous demande |
+| « Achète 50 $ de X, take-profit à +40 %, stop à -20 % » | `moonrush-bracket` : l'achat, puis les deux sorties |
+| « Quelles positions n'ont pas de stop-loss ? » | le workflow [risque des positions](./docs/workflow-position-risk.md) |
+| « Qu'ont rapporté mes appels, et pourquoi ce n'est pas arrivé ? » | `moonrush-rewards` |
+
+Rien qui dépense de l'argent ne se produit sur une simple phrase. Les compétences cotent
+d'abord, montrent les chiffres, vous demandent au terminal, et il leur est interdit de passer
+`--yes`.
 
 ## Compétences
 
@@ -136,6 +166,17 @@ qui appartiennent les données renvoyées.
 
 `token verified`, `token check` et `market config` ne demandent aucune authentification.
 
+**Variables d'environnement, pour un conteneur ou une CI.** Les mêmes identifiants sans fichier
+de configuration, et elles l'emportent sur le fichier quand les deux existent. Copiez
+[.env.example](./.env.example) vers `~/.config/moonrush/.env`, ou exportez-les :
+
+| Variable | Ce que c'est |
+|---|---|
+| `MOONRUSH_TOKEN` | Le jeton d'accès court. Suffit seul pendant environ une heure. |
+| `MOONRUSH_REFRESH_TOKEN` | L'identifiant longue durée. Avec lui le CLI se renouvelle et continue de fonctionner tant que la session Privy vit. **À traiter comme un secret.** |
+| `MOONRUSH_PRIVY_APP_ID`, `MOONRUSH_PRIVY_CLIENT_ID` | Valeurs publiques, issues des en-têtes de l'appel de session Privy. |
+| `MOONRUSH_API_BASE` | Optionnel. Par défaut `https://social.moonrush.space`. |
+
 ## Sécurité
 
 Les noms, symboles et descriptions de tokens sont écrits par celui qui a déployé le token, et
@@ -164,6 +205,17 @@ npm ci && npm run build && npm test
 
 La CI lance build et tests sur Node 20 et 24, et vérifie que le frontmatter de chaque
 compétence correspond à son dossier.
+
+## Liens
+
+- La console, où se créent les clés : [moonrush.space/ai](https://moonrush.space/ai)
+- Versions et changements : [releases](https://github.com/moonrush-app/moonrush-skills/releases)
+- Un problème, ou une commande souhaitée : [ouvrir une issue](https://github.com/moonrush-app/moonrush-skills/issues)
+- [X](https://x.com/moonrush_space) · [Discord](https://discord.gg/vD66uhAG3h) · [Telegram](https://t.me/moonrush_space_app)
+
+Les pull requests sont bienvenues. Une nouvelle compétence a besoin d'un `SKILL.md` dont le
+`name` correspond à son dossier, ce que la CI vérifie, et le style de la maison n'utilise pas
+d'em dash, ce que la CI vérifie aussi.
 
 ## Licence
 

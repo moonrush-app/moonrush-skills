@@ -47,7 +47,36 @@ moonrush-cli config
 npx skills add moonrush-app/moonrush-skills
 ```
 
-Codex: [.codex/INSTALL.md](./.codex/INSTALL.md)。OpenCode: [.opencode/INSTALL.md](./.opencode/INSTALL.md)。
+Claude Code など `.claude-plugin` を読むホストなら、上のコマンドだけで足ります。
+
+| ホスト | インストール |
+|---|---|
+| Claude Code、Codex、OpenCode、Cursor | `npx skills add moonrush-app/moonrush-skills` |
+| Codex、手動 | [.codex/INSTALL.md](./.codex/INSTALL.md) |
+| OpenCode、手動 | [.opencode/INSTALL.md](./.opencode/INSTALL.md) |
+| Cursor | パッケージに [.cursor-plugin/plugin.json](./.cursor-plugin/plugin.json) が入っています。Cursor にこのリポジトリか、インストール済みの npm パッケージを指させてください |
+
+## 自然な言葉で尋ねる
+
+このリポジトリの主役はスキルです。入れたあとはエージェントに話しかけるだけで、スキルとコマンドは
+エージェントが選びます。
+
+| こう言うと | これを使います |
+|---|---|
+| 「PENGU は今日どう?」 | `moonrush-token`、続いてチャートとリスク判定 |
+| 「このトークンを採点して: `<アドレス>`」 | `moonrush-token-dd`、0 から 100、減点理由つき |
+| 「誰が持っていて、どれくらい偏ってる?」 | `moonrush-holder-analysis` |
+| 「この開発者は前に何か出してる?」 | `moonrush-dev-score` |
+| 「このウォレットは追う価値ある? `<アドレス>`」 | `moonrush-wallet-score` |
+| 「いま上手い人たちは何を持ってる?」 | `moonrush-smart-money` |
+| 「このチャートを読んで」 | `moonrush-kline-pattern` |
+| 「`<トークン>` を 25 ドル買って」 | `moonrush-token-buy`: 特定、簡易デューデリ、数量、見積り、そして確認 |
+| 「X を 50 ドル、+40% で利確、-20% で損切り」 | `moonrush-bracket`: 買い、続いて両方の出口 |
+| 「損切りのないポジションはどれ?」 | [ポジションのリスク](./docs/workflow-position-risk.md) ワークフロー |
+| 「自分のコールでいくら得た? なぜ届かない?」 | `moonrush-rewards` |
+
+ひと言だけでお金が動くことはありません。スキルはまず見積りを出し、数字を見せ、端末で尋ね、
+`--yes` を渡さないよう明記されています。
 
 ## スキル
 
@@ -128,6 +157,17 @@ moonrush-cli config --apply-key <key id>.<secret>
 
 `token verified`、`token check`、`market config` は資格情報をまったく必要としません。
 
+**環境変数、コンテナや CI 向け。** 設定ファイルなしで同じ資格情報を使い、両方ある場合は環境変数が
+優先されます。[.env.example](./.env.example) を `~/.config/moonrush/.env` にコピーするか、
+export してください。
+
+| 変数 | 内容 |
+|---|---|
+| `MOONRUSH_TOKEN` | 短命のアクセストークン。単体で約一時間動きます。 |
+| `MOONRUSH_REFRESH_TOKEN` | 長命の資格情報。これがあれば CLI は自分で更新し、Privy セッションが生きている間は動き続けます。**秘密として扱ってください。** |
+| `MOONRUSH_PRIVY_APP_ID`、`MOONRUSH_PRIVY_CLIENT_ID` | 公開値。Privy セッション呼び出しのリクエストヘッダから取ります。 |
+| `MOONRUSH_API_BASE` | 任意。既定は `https://social.moonrush.space`。 |
+
 ## 安全性
 
 トークンの名前・シンボル・説明は、そのトークンを配備した本人が書いたもので、エージェント向けの CLI
@@ -154,6 +194,16 @@ npm ci && npm run build && npm test
 
 CI は Node 20 と 24 でビルドとテストを走らせ、各スキルの frontmatter がディレクトリ名と一致するか
 確認します。
+
+## リンク
+
+- キーを作るコンソール: [moonrush.space/ai](https://moonrush.space/ai)
+- リリースと変更点: [releases](https://github.com/moonrush-app/moonrush-skills/releases)
+- 不具合や欲しいコマンドがあれば: [issue を開く](https://github.com/moonrush-app/moonrush-skills/issues)
+- [X](https://x.com/moonrush_space) · [Discord](https://discord.gg/vD66uhAG3h) · [Telegram](https://t.me/moonrush_space_app)
+
+プルリクエスト歓迎です。新しいスキルには `name` がディレクトリ名と一致する `SKILL.md` が必要で、
+CI がそれを確認します。またこのリポジトリは em dash を使わず、これも CI が確認します。
 
 ## ライセンス
 

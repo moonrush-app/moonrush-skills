@@ -45,7 +45,35 @@ moonrush-cli config
 npx skills add moonrush-app/moonrush-skills
 ```
 
-Codex：[.codex/INSTALL.md](./.codex/INSTALL.md)。OpenCode：[.opencode/INSTALL.md](./.opencode/INSTALL.md)。
+支持读取 `.claude-plugin` 的宿主（含 Claude Code）：上面那条命令就够了。
+
+| 宿主 | 安装 |
+|---|---|
+| Claude Code、Codex、OpenCode、Cursor | `npx skills add moonrush-app/moonrush-skills` |
+| Codex，手动 | [.codex/INSTALL.md](./.codex/INSTALL.md) |
+| OpenCode，手动 | [.opencode/INSTALL.md](./.opencode/INSTALL.md) |
+| Cursor | 包内带有 [.cursor-plugin/plugin.json](./.cursor-plugin/plugin.json)，把 Cursor 指向本仓库或已安装的 npm 包 |
+
+## 用自然语言提问
+
+技能才是这个仓库的重点。装好之后你对助手说话，由它挑技能和命令：
+
+| 你说 | 它会去用 |
+|---|---|
+| 「PENGU 今天怎么样？」 | `moonrush-token`，然后看图和风险判定 |
+| 「给这个代币打分：`<地址>`」 | `moonrush-token-dd`，0 到 100，每项扣分都写明 |
+| 「谁在持有它，集中度高吗？」 | `moonrush-holder-analysis` |
+| 「这个开发者以前发过币吗？」 | `moonrush-dev-score` |
+| 「这个钱包值得跟吗？`<地址>`」 | `moonrush-wallet-score` |
+| 「现在最会赚的人在拿什么？」 | `moonrush-smart-money` |
+| 「帮我读一下这张图」 | `moonrush-kline-pattern` |
+| 「买 25 美元的 `<代币>`」 | `moonrush-token-buy`：解析、快速尽调、定量、报价，然后问你 |
+| 「买 50 美元 X，+40% 止盈，-20% 止损」 | `moonrush-bracket`：先买入，再挂两个出场单 |
+| 「我哪些仓位没有止损？」 | [仓位风险](./docs/workflow-position-risk.md) 工作流 |
+| 「我的喊单赚了多少，为什么还没到账？」 | `moonrush-rewards` |
+
+没有任何花钱的动作会只凭一句话就发生。技能会先报价、把数字摆出来、在终端上问你，并且被明确要求
+永不传 `--yes`。
 
 ## 技能
 
@@ -123,6 +151,16 @@ moonrush-cli config --apply-key <key id>.<secret>
 
 `token verified`、`token check` 和 `market config` 完全不需要凭证。
 
+**环境变量，用于容器或 CI。** 同样的凭证，不需要配置文件，且两者同时存在时环境变量优先。把
+[.env.example](./.env.example) 复制到 `~/.config/moonrush/.env`，或者直接 export：
+
+| 变量 | 含义 |
+|---|---|
+| `MOONRUSH_TOKEN` | 短期访问令牌，单独可用约一小时。 |
+| `MOONRUSH_REFRESH_TOKEN` | 长期凭证。有了它，CLI 会自动续期，只要 Privy 会话还活着就一直可用。**请当作机密对待。** |
+| `MOONRUSH_PRIVY_APP_ID`、`MOONRUSH_PRIVY_CLIENT_ID` | 公开值，取自 Privy 会话请求的头部。 |
+| `MOONRUSH_API_BASE` | 可选，默认 `https://social.moonrush.space`。 |
+
 ## 安全
 
 代币的名称、符号和描述由发行者自己填写，而在一个给助手用的 CLI 里，它们会直接进入模型的上下文。
@@ -144,6 +182,16 @@ npm ci && npm run build && npm test
 ```
 
 CI 在 Node 20 和 24 上运行构建与测试，并检查每个技能的 frontmatter 与其目录名一致。
+
+## 链接
+
+- 生成 key 的控制台：[moonrush.space/ai](https://moonrush.space/ai)
+- 版本与变更：[releases](https://github.com/moonrush-app/moonrush-skills/releases)
+- 有问题，或想要某条命令：[提交 issue](https://github.com/moonrush-app/moonrush-skills/issues)
+- [X](https://x.com/moonrush_space) · [Discord](https://discord.gg/vD66uhAG3h) · [Telegram](https://t.me/moonrush_space_app)
+
+欢迎 PR。新增技能需要一个 `SKILL.md`，其 `name` 必须与目录名一致（CI 会检查），并且本仓库风格
+不使用 em dash（CI 同样会检查）。
 
 ## 许可
 

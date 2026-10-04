@@ -47,7 +47,36 @@ As an agent plugin:
 npx skills add moonrush-app/moonrush-skills
 ```
 
-Codex: [.codex/INSTALL.md](./.codex/INSTALL.md). OpenCode: [.opencode/INSTALL.md](./.opencode/INSTALL.md).
+Claude Code and anything else that reads a `.claude-plugin`: the command above is enough.
+
+| Host | Install |
+|---|---|
+| Claude Code, Codex, OpenCode, Cursor | `npx skills add moonrush-app/moonrush-skills` |
+| Codex, by hand | [.codex/INSTALL.md](./.codex/INSTALL.md) |
+| OpenCode, by hand | [.opencode/INSTALL.md](./.opencode/INSTALL.md) |
+| Cursor | the package ships [.cursor-plugin/plugin.json](./.cursor-plugin/plugin.json); point Cursor at this repo or the installed npm package |
+
+## Ask in plain language
+
+The skills are the point of this repo. Once they are installed you talk to the agent, and it
+picks the skill and the commands:
+
+| What you say | What it reaches for |
+|---|---|
+| "What is PENGU doing today?" | `moonrush-token`, then the chart and the risk verdict |
+| "Score this token: `<address>`" | `moonrush-token-dd`, 0 to 100 with every deduction named |
+| "Who holds it, and how concentrated is it?" | `moonrush-holder-analysis` |
+| "Has this dev launched anything before?" | `moonrush-dev-score` |
+| "Is this wallet worth copying? `<address>`" | `moonrush-wallet-score` |
+| "What are the best traders holding right now?" | `moonrush-smart-money` |
+| "Read this chart for me" | `moonrush-kline-pattern` |
+| "Buy $25 of `<token>`" | `moonrush-token-buy`: resolve, quick DD, size, quote, then it asks you |
+| "Buy $50 of X, take profit at +40%, stop at -20%" | `moonrush-bracket`: the buy, then both exits |
+| "Which of my positions have no stop-loss?" | the [position risk](./docs/workflow-position-risk.md) workflow |
+| "What did my calls earn, and why has it not arrived?" | `moonrush-rewards` |
+
+Nothing that spends money happens on a sentence alone. The skills quote first, show the
+numbers, and ask you at the terminal, and they are told never to pass `--yes`.
 
 ## Skills
 
@@ -157,6 +186,17 @@ sit in the higher tier, because what makes a call dangerous is whose data comes 
 
 `token verified`, `token check` and `market config` need no credentials at all.
 
+**Environment variables, for a container or a CI job.** The same credentials without a config
+file, and they win over the file when both are present. Copy
+[.env.example](./.env.example) to `~/.config/moonrush/.env`, or export them:
+
+| Variable | What it is |
+|---|---|
+| `MOONRUSH_TOKEN` | The short-lived access token. Works alone for about an hour. |
+| `MOONRUSH_REFRESH_TOKEN` | The long-lived credential. With it the CLI renews itself and keeps working as long as the Privy session lives. **Treat it as a secret.** |
+| `MOONRUSH_PRIVY_APP_ID`, `MOONRUSH_PRIVY_CLIENT_ID` | Public values, from the request headers of the Privy session call. |
+| `MOONRUSH_API_BASE` | Optional. Defaults to `https://social.moonrush.space`. |
+
 ## Safety
 
 Token names, symbols and descriptions are written by whoever deployed the token, and in a
@@ -183,6 +223,16 @@ npm ci && npm run build && npm test
 
 CI runs build and tests on Node 20 and 24 and checks that every skill's frontmatter
 matches its directory.
+
+## Links
+
+- The console, where keys are made: [moonrush.space/ai](https://moonrush.space/ai)
+- Releases and what changed: [github.com/moonrush-app/moonrush-skills/releases](https://github.com/moonrush-app/moonrush-skills/releases)
+- Something wrong, or a command you want: [open an issue](https://github.com/moonrush-app/moonrush-skills/issues)
+- [X](https://x.com/moonrush_space) · [Discord](https://discord.gg/vD66uhAG3h) · [Telegram](https://t.me/moonrush_space_app)
+
+Pull requests are welcome. A new skill needs a `SKILL.md` whose `name` matches its directory,
+which CI checks, and the house style has no em dashes in it, which CI also checks.
 
 ## License
 
