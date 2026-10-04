@@ -23,7 +23,7 @@ export class ApiError extends Error {
     this.name = "ApiError";
   }
 
-  /** A 401 that survived a refresh attempt, so re-applying credentials is the only fix. */
+  /** A 401: the key is revoked, mistyped, or below the tier the call needs. */
   get isExpiredAuth(): boolean {
     return this.status === 401;
   }

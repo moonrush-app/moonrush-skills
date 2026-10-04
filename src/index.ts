@@ -122,15 +122,13 @@ main()
       return exit(1);
     }
     if (err instanceof ApiError && err.isExpiredAuth) {
-      // Reached only after a refresh was TRIED and could not help: either no refresh token
-      // is stored, or Privy ended the session. Those need different things from the reader,
-      // so they are not one message.
+      // A key does not expire, so a 401 here is a key that was revoked, mistyped, or is
+      // missing the tier this call needs. Nothing retries on its own: the fix is a key, and
+      // the message is the command that applies one.
       process.stderr.write(
-        err.code === "PRIVY_SESSION_ENDED"
-          ? "401. Privy ended this session.\n" +
-              "Apply a key again: moonrush-cli config --apply-key <key id>.<secret>\n"
-          : "401. The session is not usable.\n" +
-              "Apply a key again: moonrush-cli config --apply-key <key id>.<secret>\n",
+        "401. This key is not usable for that call.\n" +
+          "Check its tier at https://moonrush.space/ai/keys, or apply another:\n" +
+          "  moonrush-cli config --apply-key <key id>.<secret>\n",
       );
       return exit(1);
     }

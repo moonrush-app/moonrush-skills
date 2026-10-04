@@ -25,10 +25,9 @@ export interface Config {
   /**
    * An API key, as `<key id>.<secret>`, from https://moonrush.space/ai/keys.
    *
-   * ⚠️ AN ALTERNATIVE TO THE PRIVY SESSION, NOT AN ADDITION. When this is set the client
-   * talks to the gateway instead, which does not need a browser and does not expire in an
-   * hour. That is the whole reason it exists: `login` needs a browser on the same machine,
-   * which rules out CI and a server with no display.
+   * ⚠️ THE ONLY CREDENTIAL. It needs no browser and does not expire, which is the whole
+   * reason it replaced the browser sign-in: that one needed a display on the same machine,
+   * which ruled out CI and any server without one.
    */
   apiKey?: string;
 
@@ -68,7 +67,7 @@ function parseEnv(text: string): Record<string, string> {
  * The effective config.
  *
  * Environment variables WIN over the file, so a CI job or a one-off
- * `MOONRUSH_TOKEN=... moonrush-cli ...` needs no file at all and leaves nothing behind.
+ * `MOONRUSH_API_KEY=... moonrush-cli ...` needs no file at all and leaves nothing behind.
  */
 export function loadConfig(): Config {
   const fromFile = existsSync(CONFIG_FILE)

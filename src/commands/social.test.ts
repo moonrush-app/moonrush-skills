@@ -24,7 +24,6 @@ beforeAll(async () => {
   process.env.MOONRUSH_API_KEY = "testkey.testsecret";
   process.env.MOONRUSH_API_BASE = "https://api.test";
   process.env.MOONRUSH_GATEWAY_BASE = "https://api.test";
-  delete process.env.MOONRUSH_TOKEN;
   social = await import("./social");
   ({ Refused } = await import("../lib/confirm"));
   globalThis.fetch = (async (url: string | URL, init?: RequestInit) => {

@@ -4,17 +4,16 @@ import { checkFlags } from "../lib/validate.js";
 import { generateKeypair, loadPrivateKey, PRIVATE_KEY_PATH } from "../lib/keypair.js";
 
 /**
- * How somebody gets a token, written where they will be when they need it.
+ * How somebody gets a credential, written where they will be when they need it.
  *
- * There is no device flow and no API key: Moonrush authenticates with Privy, which issues
- * its token to a browser or an app and rotates it there. A terminal can hold a copy and
- * nothing more, so the honest instruction is "copy it from a place you are already signed
- * in", and the honest warning is that it expires.
+ * One way in, and no browser: a key made on the console, with its signing half generated
+ * here. So this text is the whole path, which is why it is a constant and not scattered
+ * across the error messages that send people to it.
  */
 const HOW_TO = `Moonrush authenticates with an API KEY, made at
-https://moonrush.space/ai/keys. There is no browser sign-in here any more: a Privy session
-meant a long-lived refresh token to a whole account sitting in a file, and a key is scoped,
-revocable from that page, and signed by a private half that never leaves this machine.
+https://moonrush.space/ai/keys. There is no browser sign-in here: that kept a long-lived
+credential to a whole account in a file, and a key is scoped, revocable from that page, and
+signed by a private half that never leaves this machine.
 
   moonrush-cli config --generate-key                  # keypair, private half stays here
   # paste the PUBLIC key at https://moonrush.space/ai/keys
