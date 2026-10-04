@@ -224,6 +224,21 @@ npm ci && npm run build && npm test
 CI runs build and tests on Node 20 and 24 and checks that every skill's frontmatter
 matches its directory.
 
+## What it does not do
+
+Worth knowing before you plan an integration around it. Each of these exists in the API and
+has no command here yet.
+
+- **No money out.** `wallet deposits` shows where to send funds in, and nothing here sends
+  funds anywhere. Withdrawing and sending are `/transfer/*` and `/rh/send` on the API; no
+  command calls them.
+- **No live streams.** The API has six sockets (gateway, chart, intent, trending, verified,
+  discovery). A CLI process does not hold one open, so every skill polls instead. For an
+  agent that is usually the right trade: asking again is cheap, and a socket it has to
+  babysit is not.
+- **No perps.** `/perps` is on the API. No skill covers it.
+- **No notifications.** Nothing here reads or sends them.
+
 ## Links
 
 - The console, where keys are made: [moonrush.space/ai](https://moonrush.space/ai)

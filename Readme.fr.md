@@ -206,6 +206,21 @@ npm ci && npm run build && npm test
 La CI lance build et tests sur Node 20 et 24, et vérifie que le frontmatter de chaque
 compétence correspond à son dossier.
 
+## Ce qu'il ne fait pas
+
+À savoir avant de bâtir une intégration autour. Chacun de ces points existe dans l'API et
+n'a pas encore de commande ici.
+
+- **Pas de sortie d'argent.** `wallet deposits` indique où envoyer des fonds, et rien ici
+  n'en envoie où que ce soit. Retirer et envoyer, ce sont `/transfer/*` et `/rh/send` sur
+  l'API ; aucune commande ne les appelle.
+- **Pas de flux en direct.** L'API a six sockets (gateway, chart, intent, trending, verified,
+  discovery). Un processus CLI n'en garde pas un ouvert, donc chaque compétence interroge à
+  la demande. Pour un agent c'est généralement le bon compromis : redemander coûte peu, et
+  une connexion à surveiller coûte cher.
+- **Pas de perps.** `/perps` est sur l'API. Aucune compétence ne le couvre.
+- **Pas de notifications.** Rien ici ne les lit ni ne les envoie.
+
 ## Liens
 
 - La console, où se créent les clés : [moonrush.space/ai](https://moonrush.space/ai)

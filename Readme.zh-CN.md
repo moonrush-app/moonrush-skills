@@ -183,6 +183,18 @@ npm ci && npm run build && npm test
 
 CI 在 Node 20 和 24 上运行构建与测试，并检查每个技能的 frontmatter 与其目录名一致。
 
+## 它不做什么
+
+在围绕它做集成之前值得先知道。下面每一项在 API 里都存在，只是这里还没有对应命令。
+
+- **不往外转钱。** `wallet deposits` 只告诉你钱该往哪里充，这里没有任何命令把钱转出去。提现和
+  转账是 API 的 `/transfer/*` 和 `/rh/send`，没有命令调用它们。
+- **没有实时流。** API 有六个 socket（gateway、chart、intent、trending、verified、discovery）。
+  CLI 进程不会一直挂着连接，所以所有技能都用轮询。对助手来说这通常是对的取舍：再问一次很便宜，
+  而要照看的长连接并不便宜。
+- **没有永续合约。** API 有 `/perps`，这里没有技能覆盖。
+- **没有通知。** 这里既不读也不发。
+
 ## 链接
 
 - 生成 key 的控制台：[moonrush.space/ai](https://moonrush.space/ai)
