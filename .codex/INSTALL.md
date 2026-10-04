@@ -14,7 +14,7 @@ Codex discovers skills natively. Clone, symlink, configure.
 1. **Clone:**
 
    ```bash
-   git clone https://github.com/moonrush/moonrush-skills ~/.codex/moonrush-cli
+   git clone https://github.com/moonrush-app/moonrush-skills ~/.codex/moonrush-cli
    ```
 
 2. **Build the CLI** (it ships as TypeScript in the repo):
