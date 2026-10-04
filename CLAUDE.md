@@ -42,6 +42,8 @@ erroring. And `/proxy/tokenDetails` takes its argument as a single `tokenId` str
 | `moonrush-holder-analysis` | Who holds a token, concentration, whales, pools and burns |
 | `moonrush-dev-score` | Who created a token and what their previous launches became |
 | `moonrush-wallet-score` | Whether any wallet, Moonrush user or not, is a good trader |
+| `moonrush-bracket` | Buy and place both exits in one flow: the buy, then take-profit and stop-loss |
+| `moonrush-send` | Money OUT: cash out USDC on Solana or bridged, and send an EVM asset |
 
 ## Quick routing
 
@@ -145,7 +147,7 @@ at all.
 ## Architecture
 
 - `src/commands/*.ts` is the single source of truth for commands, sub-commands and options
-- `src/lib/api.ts` unwraps both envelopes and refreshes the Privy session on a 401
+- `src/lib/api.ts` unwraps both envelopes and signs every request with the API key
 - `src/lib/validate.ts` refuses locally what the API would refuse, with a message that says
   which argument was wrong
 - `src/lib/sanitize.ts` cleans attacker-written text fields

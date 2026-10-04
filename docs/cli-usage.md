@@ -22,8 +22,9 @@ The private key is written to `~/.config/moonrush/signing-key.pem` at mode 600 a
 transmitted. `--generate-key` refuses to overwrite one: replacing it breaks every API key
 registered with it while the console still lists them as live.
 
-When an API key is configured it is used instead of the browser session, and every request
-is signed with that key.
+There is no other way in. The browser sign-in this replaced is gone, so a missing key is
+not a fallback to something else, it is the whole answer: `config --check` exits 1 and the
+private routes answer 401.
 
 ### Tiers
 
@@ -177,6 +178,28 @@ moonrush-cli orders cancel --id <uuid>
 ```
 
 `create` asks on a terminal: once armed, an order trades by itself.
+
+## send
+
+```bash
+moonrush-cli send usdc --to <solana address> --amount 50                      # MOVES MONEY
+moonrush-cli send usdc --to <0x...> --amount 50 --networkId base              # bridged
+moonrush-cli send asset --token native --amount max --to <0x...>              # MOVES MONEY
+moonrush-cli send asset --token <0x...> --amount 1000000 --to <0x...> --networkId 4663
+```
+
+The address shape is checked against the chain before anything is sent, because the same
+string is a different destination on two networks. A `0x` address whose EIP-55 checksum
+fails is refused and never repaired: the repaired address is one nobody approved.
+
+`send usdc` bridges to any chain but Solana, and bridged withdrawals have a **5 USDC
+minimum**. Robinhood Chain delivers USDG; there is no USDC there.
+
+For `send asset`, `--amount` is raw MINOR units, not dollars, or `max`. `max` is safer
+than arithmetic: the server reads the exact on-chain balance, so nothing is left as dust.
+
+These are the only commands here with no undo. A buy can be sold and an order cancelled;
+a withdrawal is gone the moment it lands, at whatever address was typed.
 
 ## feed, mooncall, follow
 
