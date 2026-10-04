@@ -135,7 +135,7 @@ moonrush-cli <commande> --help
 **Une seule entrée : une clé API.** Elle fonctionne pareil sur un portable, un serveur, en CI
 et dans un agent, et elle n'expire pas.
 
-La connexion par navigateur qu'elle remplace gardait une session Privy sur le disque, c'est-à-
+La connexion par navigateur qu'elle remplace gardait sa session sur le disque, c'est-à-
 dire un jeton de rafraîchissement longue durée vers un compte entier dans un fichier. Une clé
 est limitée à `read` ou `read` + `trade`, révocable depuis la console, et signée par une moitié
 privée générée localement et jamais envoyée.

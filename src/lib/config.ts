@@ -40,10 +40,10 @@ const DEFAULTS = {
   /**
    * The gateway, on its own domain since 2026-10-04.
    *
-   * It was `moonrush-ai-api.contact-9ba.workers.dev`, which worked and advertised the
-   * account's internal naming to everybody who installed the package. A `workers.dev`
-   * hostname is not a secret, and a default that ships in a tarball is not the place to
-   * discover that: `ai.moonrush.space` answers identically and says nothing extra.
+   * It used to be the generated per-account hostname, which worked and told everybody who
+   * installed the package how the account is laid out internally. That is not a secret and
+   * not an attack, but a default shipped in a tarball is the wrong place to learn it:
+   * `ai.moonrush.space` answers identically and says nothing extra.
    */
   gatewayBase: "https://ai.moonrush.space",
 };

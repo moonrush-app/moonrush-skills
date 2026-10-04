@@ -124,11 +124,11 @@ async function requestWithApiKey<T>(path: string, opts: Options): Promise<T> {
 async function request<T>(path: string, opts: Options): Promise<T> {
   const cfg = loadConfig();
 
-  // AN API KEY OR NOTHING. This used to carry a second path: a Privy access token in a
-  // bearer header, refreshed from a stored refresh token when it expired. That meant a
-  // long-lived credential to somebody's whole account sitting in a file on disk, which the
-  // console never needs to issue: an API key is scoped, revocable from a page, and its
-  // signing half is generated locally and never uploaded.
+  // AN API KEY OR NOTHING. This used to carry a second path: a browser session's access
+  // token in a bearer header, refreshed from a stored refresh token when it expired. That
+  // meant a long-lived credential to somebody's whole account sitting in a file on disk,
+  // which the console never needs to issue: an API key is scoped, revocable from a page,
+  // and its signing half is generated locally and never uploaded.
   //
   // The admin origin went the same way in 0.5.3, for the same reason: fewer ways in is
   // fewer things to get wrong.

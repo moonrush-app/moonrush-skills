@@ -159,7 +159,7 @@ Every command prints JSON on stdout and takes `--raw` for one line. Full referen
 **One way in: an API key.** It works the same on a laptop, a server, in CI and inside an
 agent, and it does not expire.
 
-The browser sign-in this replaced kept a Privy session on disk, which meant a long-lived
+The browser sign-in this replaced kept its session on disk, which meant a long-lived
 refresh token to a whole account in a file. A key is scoped to `read` or `read` + `trade`,
 revocable from the console, and signed by a private half that is generated locally and never
 uploaded.
