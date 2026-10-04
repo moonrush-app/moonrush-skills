@@ -33,8 +33,6 @@ export class ApiError extends Error {
 interface Options {
   method?: string;
   body?: unknown;
-  /** The admin console rather than the app API. */
-  admin?: boolean;
   /** For the handful of routes that need no token. */
   anonymous?: boolean;
 }
@@ -158,14 +156,15 @@ async function request<T>(
 ): Promise<T> {
   const cfg = loadConfig();
 
-  // AN API KEY WINS when one is configured, and the admin routes are the exception: the
-  // gateway fronts the app API only, so pointing an admin call at it would 404 in a way
-  // that reads like the command being wrong.
-  if (cfg.apiKey && !opts.admin && !opts.anonymous) {
+  // AN API KEY WINS when one is configured. The exception this used to carry was the admin
+  // console, reached through its own base: nothing ever set `admin: true`, so the option, the
+  // base and its default URL were removed rather than left as a second origin this client
+  // could be pointed at.
+  if (cfg.apiKey && !opts.anonymous) {
     return requestWithApiKey<T>(path, opts);
   }
 
-  const base = opts.admin ? cfg.adminBase : cfg.apiBase;
+  const base = cfg.apiBase;
 
   if (!opts.anonymous && !cfg.token) {
     // No access token at all, but possibly a refresh token: mint one rather than telling

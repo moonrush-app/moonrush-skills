@@ -162,10 +162,7 @@ moonrush-cli config --apply-key <key id>.<secret>
 
 | 변수 | 설명 |
 |---|---|
-| `MOONRUSH_TOKEN` | 단기 액세스 토큰. 단독으로 약 한 시간 동작합니다. |
-| `MOONRUSH_REFRESH_TOKEN` | 장기 자격 증명. 이것이 있으면 CLI가 스스로 갱신하며 Privy 세션이 살아 있는 동안 계속 동작합니다. **비밀로 다루세요.** |
-| `MOONRUSH_PRIVY_APP_ID`, `MOONRUSH_PRIVY_CLIENT_ID` | 공개 값. Privy 세션 호출의 요청 헤더에서 가져옵니다. |
-| `MOONRUSH_API_BASE` | 선택. 기본값 `https://social.moonrush.space`. |
+| `MOONRUSH_API_KEY` | 자격 증명. 콘솔에서 만든 `<key id>.<secret>`. |
 
 ## 안전
 

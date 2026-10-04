@@ -172,10 +172,7 @@ de configuration, et elles l'emportent sur le fichier quand les deux existent. C
 
 | Variable | Ce que c'est |
 |---|---|
-| `MOONRUSH_TOKEN` | Le jeton d'accès court. Suffit seul pendant environ une heure. |
-| `MOONRUSH_REFRESH_TOKEN` | L'identifiant longue durée. Avec lui le CLI se renouvelle et continue de fonctionner tant que la session Privy vit. **À traiter comme un secret.** |
-| `MOONRUSH_PRIVY_APP_ID`, `MOONRUSH_PRIVY_CLIENT_ID` | Valeurs publiques, issues des en-têtes de l'appel de session Privy. |
-| `MOONRUSH_API_BASE` | Optionnel. Par défaut `https://social.moonrush.space`. |
+| `MOONRUSH_API_KEY` | L'identifiant, `<key id>.<secret>`, créé dans la console. |
 
 ## Sécurité
 

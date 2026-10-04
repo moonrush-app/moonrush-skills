@@ -49,8 +49,6 @@ export interface Config {
   privyOrigin: string;
   /** The API origin. Overridable so a developer can point at a preview deployment. */
   apiBase: string;
-  /** The admin console origin, for the admin-only commands. */
-  adminBase: string;
 
   /**
    * An API key, as `<key id>.<secret>`, from https://moonrush.space/ai/keys.
@@ -69,7 +67,6 @@ export interface Config {
 const DEFAULTS = {
   apiBase: "https://social.moonrush.space",
   gatewayBase: "https://moonrush-ai-api.contact-9ba.workers.dev",
-  adminBase: "https://moonrush-admin.contact-9ba.workers.dev",
   /**
    * ⚠️ MUST MATCH WHERE THE TOKENS CAME FROM. Privy checks it against the app's allowlist
    * and answers `403 Origin not allowed` otherwise, which is how this default was found to
@@ -117,7 +114,6 @@ export function loadConfig(): Config {
     privyAppId: pick("MOONRUSH_PRIVY_APP_ID"),
     privyClientId: pick("MOONRUSH_PRIVY_CLIENT_ID"),
     apiBase: pick("MOONRUSH_API_BASE") ?? DEFAULTS.apiBase,
-    adminBase: pick("MOONRUSH_ADMIN_BASE") ?? DEFAULTS.adminBase,
     privyOrigin: pick("MOONRUSH_PRIVY_ORIGIN") ?? DEFAULTS.privyOrigin,
   };
 }

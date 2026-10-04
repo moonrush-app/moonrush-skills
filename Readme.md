@@ -192,10 +192,7 @@ file, and they win over the file when both are present. Copy
 
 | Variable | What it is |
 |---|---|
-| `MOONRUSH_TOKEN` | The short-lived access token. Works alone for about an hour. |
-| `MOONRUSH_REFRESH_TOKEN` | The long-lived credential. With it the CLI renews itself and keeps working as long as the Privy session lives. **Treat it as a secret.** |
-| `MOONRUSH_PRIVY_APP_ID`, `MOONRUSH_PRIVY_CLIENT_ID` | Public values, from the request headers of the Privy session call. |
-| `MOONRUSH_API_BASE` | Optional. Defaults to `https://social.moonrush.space`. |
+| `MOONRUSH_API_KEY` | The credential, `<key id>.<secret>` from the console. |
 
 ## Safety
 

@@ -163,10 +163,7 @@ export してください。
 
 | 変数 | 内容 |
 |---|---|
-| `MOONRUSH_TOKEN` | 短命のアクセストークン。単体で約一時間動きます。 |
-| `MOONRUSH_REFRESH_TOKEN` | 長命の資格情報。これがあれば CLI は自分で更新し、Privy セッションが生きている間は動き続けます。**秘密として扱ってください。** |
-| `MOONRUSH_PRIVY_APP_ID`、`MOONRUSH_PRIVY_CLIENT_ID` | 公開値。Privy セッション呼び出しのリクエストヘッダから取ります。 |
-| `MOONRUSH_API_BASE` | 任意。既定は `https://social.moonrush.space`。 |
+| `MOONRUSH_API_KEY` | 資格情報。コンソールで作る `<key id>.<secret>`。 |
 
 ## 安全性
 

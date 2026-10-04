@@ -156,10 +156,7 @@ moonrush-cli config --apply-key <key id>.<secret>
 
 | 变量 | 含义 |
 |---|---|
-| `MOONRUSH_TOKEN` | 短期访问令牌，单独可用约一小时。 |
-| `MOONRUSH_REFRESH_TOKEN` | 长期凭证。有了它，CLI 会自动续期，只要 Privy 会话还活着就一直可用。**请当作机密对待。** |
-| `MOONRUSH_PRIVY_APP_ID`、`MOONRUSH_PRIVY_CLIENT_ID` | 公开值，取自 Privy 会话请求的头部。 |
-| `MOONRUSH_API_BASE` | 可选，默认 `https://social.moonrush.space`。 |
+| `MOONRUSH_API_KEY` | 凭证，形如 `<key id>.<secret>`，在控制台生成。 |
 
 ## 安全
 

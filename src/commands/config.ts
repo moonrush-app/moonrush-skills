@@ -203,7 +203,6 @@ export async function runConfig(
   process.stdout.write(
     `${HOW_TO}\n\nCurrent:\n` +
       `  api      ${cfg.apiBase}\n` +
-      `  admin    ${cfg.adminBase}\n` +
       `  origin   ${cfg.privyOrigin}\n` +
       `  gateway  ${cfg.gatewayBase}\n` +
       `  api key  ${cfg.apiKey ? `set (${cfg.apiKey.split(".")[0]}…)` : "not set"}\n` +
