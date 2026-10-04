@@ -1,8 +1,40 @@
-# moonrush-skills
+<div align="center">
+
+# Moonrush Agent Skills
 
 ![Moonrush skills](https://raw.githubusercontent.com/moonrush-app/moonrush-skills/main/static/moonrush-skills.png)
 
-The Moonrush API as a CLI, plus the skills that let an agent use it.
+**English** ·
+[简体中文](./Readme.zh-CN.md) ·
+[Français](./Readme.fr.md) ·
+[한국어](./Readme.ko.md) ·
+[日本語](./Readme.ja.md)
+
+[![Console](https://img.shields.io/badge/console-moonrush.space%2Fai-7C3AED)](https://moonrush.space/ai)
+[![npm](https://img.shields.io/npm/v/moonrush-cli?color=5865F2&label=moonrush-cli)](https://www.npmjs.com/package/moonrush-cli)
+[![X](https://img.shields.io/badge/X-@moonrush__space-000000?logo=x&logoColor=white)](https://x.com/moonrush_space)
+[![Discord](https://img.shields.io/badge/Discord-join-5865F2?logo=discord&logoColor=white)](https://discord.gg/vD66uhAG3h)
+[![Telegram](https://img.shields.io/badge/Telegram-announcements-26A5E4?logo=telegram&logoColor=white)](https://t.me/moonrush_space_app)
+[![Telegram](https://img.shields.io/badge/Telegram-chat-26A5E4?logo=telegram&logoColor=white)](https://t.me/moonrush_spacechat)
+
+</div>
+
+With Moonrush Agent Skills you can ask an AI agent, in plain language, for live discovery
+boards across Solana, Robinhood Chain, Base, BNB, Soneium and Arc, token fundamentals and a
+named risk verdict, the Verified roster, a technical read of any chart, the full holder list
+with concentration and fresh whales, a creator's history scored from everything they launched
+before, any wallet scored as skilled, lucky, bot or dev, and what the top of the PnL
+leaderboard is holding right now.
+
+It also carries the part no other chain-data toolkit has: Moonrush is a social exchange, so
+the same agent reads the feed and a trader's timeline, the mooncalls under a position and who
+follows whom, and tells a creator what they earned from other people trading off their calls.
+
+Trading is first class, and it moves real money: quotes, market buys and sells, limit orders,
+take-profit, stop-loss and trailing variants, bracket entries that place both exits in one
+flow, and the wallet side with balances, portfolio value over time, deposits and activity.
+Every path that spends money quotes first, shows the numbers, and asks the person at the
+terminal.
 
 ## Install
 
@@ -38,6 +70,7 @@ Codex: [.codex/INSTALL.md](./.codex/INSTALL.md). OpenCode: [.opencode/INSTALL.md
 | `moonrush-holder-analysis` | The full holder list, concentration, fresh whales, pools and burns |
 | `moonrush-dev-score` | A 0 to 100 score of a token's creator from everything they launched before |
 | `moonrush-wallet-score` | Any wallet's on-chain trading record as a score: skilled, lucky, bot or dev |
+| `moonrush-bracket` | Buy and set both exits in one flow: the buy, then take-profit and stop-loss |
 
 ## Workflows
 

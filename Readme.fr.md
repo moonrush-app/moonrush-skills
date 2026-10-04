@@ -1,0 +1,172 @@
+<div align="center">
+
+# Moonrush Agent Skills
+
+![Moonrush skills](https://raw.githubusercontent.com/moonrush-app/moonrush-skills/main/static/moonrush-skills.png)
+
+[English](./Readme.md) ·
+[简体中文](./Readme.zh-CN.md) ·
+**Français** ·
+[한국어](./Readme.ko.md) ·
+[日本語](./Readme.ja.md)
+
+[![Console](https://img.shields.io/badge/console-moonrush.space%2Fai-7C3AED)](https://moonrush.space/ai)
+[![npm](https://img.shields.io/npm/v/moonrush-cli?color=5865F2&label=moonrush-cli)](https://www.npmjs.com/package/moonrush-cli)
+[![X](https://img.shields.io/badge/X-@moonrush__space-000000?logo=x&logoColor=white)](https://x.com/moonrush_space)
+[![Discord](https://img.shields.io/badge/Discord-join-5865F2?logo=discord&logoColor=white)](https://discord.gg/vD66uhAG3h)
+[![Telegram](https://img.shields.io/badge/Telegram-announcements-26A5E4?logo=telegram&logoColor=white)](https://t.me/moonrush_space_app)
+[![Telegram](https://img.shields.io/badge/Telegram-chat-26A5E4?logo=telegram&logoColor=white)](https://t.me/moonrush_spacechat)
+
+</div>
+
+Avec Moonrush Agent Skills, vous demandez en langage naturel à un agent IA les classements de
+découverte en temps réel sur Solana, Robinhood Chain, Base, BNB, Soneium et Arc, les
+fondamentaux d'un token avec un verdict de risque nommé, la liste Verified, une lecture
+technique de n'importe quel graphique, la liste complète des détenteurs avec la concentration
+et les nouvelles baleines, l'historique d'un créateur noté à partir de tout ce qu'il a lancé
+avant, n'importe quel portefeuille noté comme compétent, chanceux, bot ou développeur, et ce
+que détiennent en ce moment les premiers du classement PnL.
+
+S'y ajoute ce qu'aucune autre boîte à outils de données on-chain ne possède : Moonrush est une
+place de marché sociale, donc le même agent lit le fil et la timeline d'un trader, les
+mooncalls sous une position et qui suit qui, et dit à un créateur ce que lui ont rapporté les
+trades passés d'après ses appels.
+
+Le trading est de premier plan, et il engage de l'argent réel : cotations, achats et ventes au
+marché, ordres limites, take-profit, stop-loss et leurs variantes suiveuses, entrées en
+bracket qui placent les deux sorties en une seule fois, et le côté portefeuille avec les
+soldes, la valeur dans le temps, les dépôts et l'activité. Chaque chemin qui dépense cote
+d'abord, montre les chiffres, et demande à la personne devant le terminal.
+
+> Le [Readme.md](./Readme.md) anglais est la seule version de référence. En cas de divergence,
+> c'est lui qui fait foi.
+
+## Installation
+
+```bash
+npm install -g moonrush-cli
+moonrush-cli config
+```
+
+Comme plugin d'agent :
+
+```bash
+npx skills add moonrush-app/moonrush-skills
+```
+
+Codex : [.codex/INSTALL.md](./.codex/INSTALL.md). OpenCode : [.opencode/INSTALL.md](./.opencode/INSTALL.md).
+
+## Compétences
+
+| Compétence | Couvre |
+|---|---|
+| `moonrush-token` | Détail d'un token, recherche par nom, liste Verified |
+| `moonrush-market` | Classements Trending / Movers / New, configuration des frais en direct |
+| `moonrush-wallet` | Soldes, portefeuille, dépôts, valeur dans le temps, activité |
+| `moonrush-positions` | Trades : les vôtres, les publics, les meilleurs, et qui détient un token |
+| `moonrush-leaderboard` | Classements PnL sur 24 h / 7 j / 30 j / depuis le début |
+| `moonrush-rewards` | Gains de créateur, et leur réclamation |
+| `moonrush-trade` | Coter, acheter, vendre ; ordres limites, take-profit, stop-loss et suiveurs |
+| `moonrush-token-dd` | Une note de diligence de 0 à 100, chaque point retiré étant justifié |
+| `moonrush-social` | Le fil, la timeline d'un trader, le fil d'une position, les mooncalls, les abonnements |
+| `moonrush-kline-pattern` | Lecture technique d'un graphique : tendance, niveaux, volume, figures et leurs règles |
+| `moonrush-smart-money` | Ce que détiennent maintenant les premiers du classement, trié par nombre de détenteurs |
+| `moonrush-token-buy` | De « achète du X » au trade confirmé : résoudre, diligence rapide, dimensionner, coter, acheter |
+| `moonrush-holder-analysis` | Liste complète des détenteurs, concentration, nouvelles baleines, pools et burns |
+| `moonrush-dev-score` | Une note de 0 à 100 du créateur d'un token, d'après tout ce qu'il a lancé avant |
+| `moonrush-wallet-score` | Le palmarès on-chain d'un portefeuille en une note : compétent, chanceux, bot ou développeur |
+| `moonrush-bracket` | Acheter et placer les deux sorties en une fois : l'achat, puis take-profit et stop-loss |
+
+## Workflows
+
+Des recettes en plusieurs étapes qui enchaînent les commandes jusqu'à une réponse :
+
+| Workflow | Pour |
+|---|---|
+| [Recherche sur un token](./docs/workflow-token-research.md) | D'un nom ou d'une adresse à ce qui mérite d'être dit |
+| [Brief quotidien](./docs/workflow-daily-brief.md) | Vos positions, les ordres déclenchés, ce qu'ont fait vos abonnements, ce qui a bougé |
+| [Profil d'un trader](./docs/workflow-trader-profile.md) | Faut-il le copier : palmarès, concentration, capacité d'exécution |
+| [Risque des positions](./docs/workflow-position-risk.md) | Quelles positions sont sans protection, et quels stops proposer |
+| [Opportunités de marché](./docs/workflow-market-opportunities.md) | Une liste filtrée sur toutes les chaînes |
+| [Revue de portefeuille](./docs/workflow-portfolio-review.md) | Positions, PnL, et ce qui l'explique |
+| [Gains de créateur](./docs/workflow-creator-earnings.md) | Ce qu'un créateur a gagné, et pourquoi ce n'est pas arrivé |
+
+## Commandes
+
+Les commandes et leurs options ne se traduisent pas. La référence complète est dans le
+[Readme.md](./Readme.md#commands) anglais, ou directement :
+
+```bash
+moonrush-cli --help
+moonrush-cli <commande> --help
+```
+
+## Authentification
+
+Deux entrées, pour deux machines différentes.
+
+**Un navigateur, pour votre portable.**
+
+```bash
+moonrush-cli login
+```
+
+Un clic. La session dure environ une heure et se renouvelle tant qu'elle vit.
+
+**Une clé API, pour un serveur, une CI ou un agent.** Sans navigateur, sans expiration.
+
+```bash
+moonrush-cli config --generate-key     # paire de clés, la moitié privée reste ici en mode 600
+# collez la clé PUBLIQUE sur https://moonrush.space/ai/keys
+moonrush-cli config --apply-key <key id>.<secret>
+```
+
+⚠️ **La clé privée ne quitte jamais votre machine et n'est jamais envoyée.** La console ne
+stocke que la moitié publique : ce que détient le serveur peut vérifier une signature, pas en
+produire une. Rien sur cette page ne devrait jamais demander une clé privée.
+
+**Les clés ont deux niveaux.** `read` couvre les données de marché publiques et ne demande que
+l'identifiant de clé. Tout ce qui appartient à une personne, c'est-à-dire votre portefeuille,
+vos positions, vos gains et leur réclamation, exige « Trading and private data » ET une
+signature portant sur le chemin, la requête, le corps et l'horodatage de chaque appel. Un
+identifiant de clé fuité lit donc les classements publics et rien d'autre, et une requête
+interceptée ne peut être ni rejouée ni modifiée.
+
+La frontière n'est pas lecture contre écriture : `rewards me` et `wallet portfolio` sont des
+lectures et relèvent pourtant du niveau supérieur, car ce qui rend un appel sensible, c'est à
+qui appartiennent les données renvoyées.
+
+`token verified`, `token check` et `market config` ne demandent aucune authentification.
+
+## Sécurité
+
+Les noms, symboles et descriptions de tokens sont écrits par celui qui a déployé le token, et
+dans un CLI fait pour des agents ils arrivent dans le contexte d'un modèle. Le client retire
+les caractères invisibles (surcharges bidi, jointures de largeur nulle, le bloc tag Unicode)
+pour qu'un texte caché ne puisse pas dire une chose au modèle et une autre à la personne. Il
+ne cherche pas à détecter des instructions : ce filtre-là se contourne, et mange au passage
+des textes de token légitimes.
+
+Les adresses ne sont jamais réécrites.
+
+`rewards claim`, `trade buy`, `trade sell` et `orders create` engagent de l'argent (un ordre
+plus tard, de lui-même), et `mooncall post` publie au nom de l'utilisateur. Chacun affiche
+d'abord les montants ou le texte exacts, demande sur un terminal, et refuse s'il n'y en a pas.
+`--yes` existe pour une personne qui tape sur sa propre machine ; les compétences interdisent
+aux agents de le passer.
+
+Les textes écrits par des personnes dans les fils (publications, bios, noms affichés) sont
+nettoyés comme les métadonnées de tokens.
+
+## Développement
+
+```bash
+npm ci && npm run build && npm test
+```
+
+La CI lance build et tests sur Node 20 et 24, et vérifie que le frontmatter de chaque
+compétence correspond à son dossier.
+
+## Licence
+
+MIT
