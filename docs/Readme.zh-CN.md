@@ -27,7 +27,7 @@ Soneium 和 Arc 上的实时发现榜单，代币基本面与明确的风险判�
 赚了多少。
 
 交易是一等公民，并且会动用真实资金：报价、市价买卖、限价单、止盈、止损及其追踪变体、一次流程内同时
-挂好两个出场单的 bracket 建仓，以及钱包侧的余额、组合价值变化、充值与活动记录。每一条花钱的路径都会
+挂好两个出场单的 bracket 建仓，以及钱包侧的余额、组合价值变化、充值、活动记录与转出提现。每一条花钱的路径都会
 先报价、把数字摆出来，并在终端上向本人确认。
 
 > 英文版 [Readme.md](../Readme.md) 是唯一权威版本。本页若与之不一致，以英文版为准。
@@ -95,6 +95,7 @@ npx skills add moonrush-app/moonrush-skills
 | `moonrush-dev-score` | 依据创建者此前的全部发行给出 0 到 100 的评分 |
 | `moonrush-wallet-score` | 把任意钱包的链上交易记录评为：熟练、运气、机器人或开发者 |
 | `moonrush-bracket` | 一次流程内完成建仓并挂好两个出场单：买入，然后止盈与止损 |
+| `moonrush-send` | 把钱转出去：提现 USDC（本链或跨链），以及转出 EVM 资产 |
 
 ## 工作流
 
@@ -161,6 +162,7 @@ moonrush-cli config --apply-key <key id>.<secret>
 地址永不改写。
 
 `rewards claim`、`trade buy`、`trade sell` 和 `orders create` 会动用资金（委托是稍后自己触发），
+`send usdc` 和 `send asset` 把钱转出去且无法撤回，
 `mooncall post` 会以用户名义发布。每一个都会先显示确切金额或文本，在终端上询问，没有终端就拒绝执行。
 `--yes` 是给本人在自己机器上输入用的；技能明确要求助手永不传它。
 
@@ -178,8 +180,9 @@ CI 在 Node 20 和 24 上运行构建与测试，并检查每个技能的 frontm
 
 在围绕它做集成之前值得先知道。下面每一项在 API 里都存在，只是这里还没有对应命令。
 
-- **不往外转钱。** `wallet deposits` 只告诉你钱该往哪里充，这里没有任何命令把钱转出去。提现和
-  转账是 API 的 `/transfer/*` 和 `/rh/send`，没有命令调用它们。
+- **并非所有转账。** `send usdc` 和 `send asset` 覆盖了提现 USDC 和转出 EVM 资产。API 上还有
+  `/transfer/sol` 和 `/transfer/token`，用于把 SOL 或 SPL 代币发到另一个 Solana 地址，目前还没有
+  命令调用它们。
 - **没有实时流。** API 有六个 socket（gateway、chart、intent、trending、verified、discovery）。
   CLI 进程不会一直挂着连接，所以所有技能都用轮询。对助手来说这通常是对的取舍：再问一次很便宜，
   而要照看的长连接并不便宜。

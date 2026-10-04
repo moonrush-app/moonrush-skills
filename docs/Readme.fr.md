@@ -33,7 +33,7 @@ trades passés d'après ses appels.
 Le trading est de premier plan, et il engage de l'argent réel : cotations, achats et ventes au
 marché, ordres limites, take-profit, stop-loss et leurs variantes suiveuses, entrées en
 bracket qui placent les deux sorties en une seule fois, et le côté portefeuille avec les
-soldes, la valeur dans le temps, les dépôts et l'activité. Chaque chemin qui dépense cote
+soldes, la valeur dans le temps, les dépôts, l'activité et le retrait vers une autre adresse. Chaque chemin qui dépense cote
 d'abord, montre les chiffres, et demande à la personne devant le terminal.
 
 > Le [Readme.md](../Readme.md) anglais est la seule version de référence. En cas de divergence,
@@ -104,6 +104,7 @@ d'abord, montrent les chiffres, vous demandent au terminal, et il leur est inter
 | `moonrush-dev-score` | Une note de 0 à 100 du créateur d'un token, d'après tout ce qu'il a lancé avant |
 | `moonrush-wallet-score` | Le palmarès on-chain d'un portefeuille en une note : compétent, chanceux, bot ou développeur |
 | `moonrush-bracket` | Acheter et placer les deux sorties en une fois : l'achat, puis take-profit et stop-loss |
+| `moonrush-send` | L'argent qui SORT : retirer de l'USDC, sur Solana ou via un pont, et envoyer un actif EVM |
 
 ## Workflows
 
@@ -182,7 +183,8 @@ des textes de token légitimes.
 Les adresses ne sont jamais réécrites.
 
 `rewards claim`, `trade buy`, `trade sell` et `orders create` engagent de l'argent (un ordre
-plus tard, de lui-même), et `mooncall post` publie au nom de l'utilisateur. Chacun affiche
+plus tard, de lui-même), `send usdc` et `send asset` le font SORTIR sans retour possible, et
+`mooncall post` publie au nom de l'utilisateur. Chacun affiche
 d'abord les montants ou le texte exacts, demande sur un terminal, et refuse s'il n'y en a pas.
 `--yes` existe pour une personne qui tape sur sa propre machine ; les compétences interdisent
 aux agents de le passer.
@@ -204,9 +206,10 @@ compétence correspond à son dossier.
 À savoir avant de bâtir une intégration autour. Chacun de ces points existe dans l'API et
 n'a pas encore de commande ici.
 
-- **Pas de sortie d'argent.** `wallet deposits` indique où envoyer des fonds, et rien ici
-  n'en envoie où que ce soit. Retirer et envoyer, ce sont `/transfer/*` et `/rh/send` sur
-  l'API ; aucune commande ne les appelle.
+- **Pas tous les transferts.** `send usdc` et `send asset` couvrent le retrait d'USDC et le
+  déplacement d'un actif EVM. `/transfer/sol` et `/transfer/token` existent aussi sur l'API,
+  pour envoyer du SOL ou un token SPL vers une autre adresse Solana, et aucune commande ne les
+  appelle encore.
 - **Pas de flux en direct.** L'API a six sockets (gateway, chart, intent, trending, verified,
   discovery). Un processus CLI n'en garde pas un ouvert, donc chaque compétence interroge à
   la demande. Pour un agent c'est généralement le bon compromis : redemander coûte peu, et

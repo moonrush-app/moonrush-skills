@@ -6,6 +6,7 @@ import { Refused } from "./lib/confirm.js";
 import { runConfig } from "./commands/config.js";
 import { runToken } from "./commands/token.js";
 import { runMarket } from "./commands/market.js";
+import { runSend } from "./commands/send.js";
 import { runWallet } from "./commands/wallet.js";
 import { runPositions } from "./commands/positions.js";
 import { runLeaderboard } from "./commands/leaderboard.js";
@@ -20,6 +21,7 @@ const USAGE = `moonrush-cli <command> [options]
   token <sub>            Token detail, search, and the Verified roster
   market <sub>           Discovery boards and the live fee config
   wallet <sub>           Balances, portfolio, deposits, chart, activity
+  send <sub>             Cash out USDC, or move an EVM asset out. MOVES MONEY.
   positions <sub>        Trades: public, your own, top, per token
   leaderboard <metric>   PnL rankings over 24h / 7d / 30d / all time
   rewards <sub>          Creator earnings, and claiming them
@@ -59,6 +61,8 @@ async function main(): Promise<number> {
       return runMarket(sub, flags);
     case "wallet":
       return runWallet(sub, flags);
+    case "send":
+      return runSend(sub, flags);
     case "positions":
       return runPositions(sub, flags);
     case "leaderboard":

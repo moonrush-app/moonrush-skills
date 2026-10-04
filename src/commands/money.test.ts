@@ -3,6 +3,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type * as OrdersModule from "./orders";
+import type * as SendModule from "./send";
 import type * as TradeModule from "./trade";
 import type * as ConfirmModule from "../lib/confirm";
 
@@ -12,6 +13,7 @@ import type * as ConfirmModule from "../lib/confirm";
 let runOrders: typeof OrdersModule.runOrders;
 let priceString: typeof OrdersModule.priceString;
 let runTrade: typeof TradeModule.runTrade;
+let runSend: typeof SendModule.runSend;
 let Refused: typeof ConfirmModule.Refused;
 
 /**
@@ -39,7 +41,10 @@ function answer(path: string): unknown {
   if (path.startsWith("/wallet/balances")) {
     return { ok: true, data: { tokens: [{ tokenAddress: TOKEN, networkId: 1399811149, balance: "8000000000" }] } };
   }
-  return { ok: true, data: { signature: "sig", id: "order" } };
+  if (path === "/rh/send/preview") {
+    return { ok: true, data: { valid: true, isNative: true, symbol: "ETH", amountMinor: "7000", needsGas: false, hasGas: true } };
+  }
+  return { ok: true, data: { signature: "sig", id: "order", txHash: "0xhash" } };
 }
 
 beforeAll(async () => {
@@ -55,6 +60,7 @@ beforeAll(async () => {
   delete process.env.MOONRUSH_TOKEN;
   ({ runOrders, priceString } = await import("./orders"));
   ({ runTrade } = await import("./trade"));
+  ({ runSend } = await import("./send"));
   ({ Refused } = await import("../lib/confirm"));
   globalThis.fetch = (async (url: string | URL, init?: RequestInit) => {
     const u = new URL(url.toString());
@@ -78,7 +84,7 @@ afterEach(() => {
 });
 
 const noTerminal = () => Object.defineProperty(process.stdin, "isTTY", { value: false, configurable: true });
-const spent = () => calls.filter((c) => ["/swap/buy", "/swap/sell", "/orders", "/evm/buy", "/evm/sell"].some((p) => c.path === p) && c.method === "POST");
+const spent = () => calls.filter((c) => ["/swap/buy", "/swap/sell", "/orders", "/evm/buy", "/evm/sell", "/transfer/usdc", "/rh/send"].some((p) => c.path === p) && c.method === "POST");
 
 describe("trade", () => {
   test("no terminal and no --yes: quoted, refused, nothing bought", async () => {
@@ -151,4 +157,78 @@ test("trigger prices never reach the API in exponent form", () => {
   expect(priceString(0.0000123)).toBe("0.0000123");
   expect(priceString(1.6)).toBe("1.6");
   expect(priceString(3412.5)).toBe("3412.5");
+});
+
+/**
+ * The only commands with no undo.
+ *
+ * A buy can be sold and an order cancelled; a withdrawal is gone. So what is tested here is
+ * mostly what does NOT leave: every refusal has to happen before the request, because a
+ * check that runs after the money has moved is a log entry, not a check.
+ */
+const SOL = "FRHQhGkHtK47VAs1zENJYpjxTV25iYHuPnishNU8jsJx";
+const EVM = "0x66d9aAe94B8C3ff0A6F1Bf67C8B0b12345678901";
+
+describe("send", () => {
+  test("no terminal and no --yes: refused, nothing withdrawn", async () => {
+    noTerminal();
+    await expect(runSend("usdc", { to: SOL, amount: "10" })).rejects.toBeInstanceOf(Refused);
+    expect(spent()).toEqual([]);
+  });
+
+  test("a Solana withdrawal omits destinationNetworkId, so it stays the plain transfer", async () => {
+    noTerminal();
+    await runSend("usdc", { to: SOL, amount: "10", yes: true });
+    const body = spent()[0]?.body as Record<string, unknown>;
+    expect(body).toMatchObject({ recipientAddress: SOL, amount: 10 });
+    expect("destinationNetworkId" in body).toBe(false);
+  });
+
+  test("a bridged withdrawal carries the chain, and the address must be that chain's shape", async () => {
+    noTerminal();
+    await runSend("usdc", { to: EVM, amount: "10", networkId: "base", yes: true });
+    expect(spent().at(-1)?.body).toMatchObject({ recipientAddress: EVM, destinationNetworkId: 8453 });
+
+    // The same string, the wrong chain: refused before any request.
+    const before = calls.length;
+    await expect(runSend("usdc", { to: SOL, amount: "10", networkId: "base", yes: true })).rejects.toThrow(/0x address on Base/);
+    expect(calls.length).toBe(before);
+  });
+
+  test("the 5 USDC bridge floor is refused locally, not after a confirmation", async () => {
+    noTerminal();
+    const before = calls.length;
+    await expect(runSend("usdc", { to: EVM, amount: "4.99", networkId: "base", yes: true })).rejects.toThrow(/5 USDC minimum/);
+    expect(calls.length).toBe(before);
+  });
+
+  test("a chain with no dollar configured is refused, and says which have one", async () => {
+    noTerminal();
+    await expect(runSend("usdc", { to: EVM, amount: "10", networkId: "9999", yes: true })).rejects.toThrow();
+  });
+
+  test("send asset takes MINOR units, so a decimal is refused", async () => {
+    noTerminal();
+    const before = calls.length;
+    await expect(runSend("asset", { token: "native", amount: "1.5", to: EVM, yes: true })).rejects.toThrow(/MINOR units/);
+    expect(calls.length).toBe(before);
+  });
+
+  test("send asset previews first, and sends the amount the preview resolved", async () => {
+    noTerminal();
+    await runSend("asset", { token: "native", amount: "max", to: EVM, yes: true });
+    expect(calls.some((c) => c.path === "/rh/send/preview")).toBe(true);
+    expect(spent().at(-1)?.body).toMatchObject({ token: "native", amountMinor: "max", toAddress: EVM });
+  });
+
+  test("every send carries a fresh idempotency key, so two deliberate sends are not deduped", async () => {
+    noTerminal();
+    await runSend("asset", { token: "native", amount: "max", to: EVM, yes: true });
+    await runSend("asset", { token: "native", amount: "max", to: EVM, yes: true });
+    const keys = spent()
+      .filter((c) => c.path === "/rh/send")
+      .map((c) => (c.body as { idempotencyKey?: string }).idempotencyKey);
+    expect(keys.length).toBeGreaterThanOrEqual(2);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
 });

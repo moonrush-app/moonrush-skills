@@ -1,7 +1,7 @@
 {
   "name": "moonrush-cli",
-  "version": "0.5.4",
-  "description": "Moonrush skills: tokens, discovery boards, wallets, positions, leaderboards, creator rewards and trading",
+  "version": "0.5.5",
+  "description": "Moonrush skills: tokens, discovery boards, wallets, positions, leaderboards, creator rewards, trading and cashing out",
   "author": { "name": "Moonrush", "url": "https://moonrush.space" },
   "repository": "https://github.com/moonrush-app/moonrush-skills",
   "license": "MIT",

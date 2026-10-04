@@ -30,9 +30,9 @@ follows whom, and tells a creator what they earned from other people trading off
 
 Trading is first class, and it moves real money: quotes, market buys and sells, limit orders,
 take-profit, stop-loss and trailing variants, bracket entries that place both exits in one
-flow, and the wallet side with balances, portfolio value over time, deposits and activity.
-Every path that spends money quotes first, shows the numbers, and asks the person at the
-terminal.
+flow, and the wallet side with balances, portfolio value over time, deposits, activity, and
+cashing out to another address. Every path that spends money quotes first, shows the numbers,
+and asks the person at the terminal.
 
 ## Install
 
@@ -98,6 +98,7 @@ numbers, and ask you at the terminal, and they are told never to pass `--yes`.
 | `moonrush-dev-score` | A 0 to 100 score of a token's creator from everything they launched before |
 | `moonrush-wallet-score` | Any wallet's on-chain trading record as a score: skilled, lucky, bot or dev |
 | `moonrush-bracket` | Buy and set both exits in one flow: the buy, then take-profit and stop-loss |
+| `moonrush-send` | Money OUT: cash out USDC on Solana or bridged, and send an EVM asset |
 
 ## Workflows
 
@@ -139,6 +140,8 @@ moonrush-cli trade buy --usd 25 --address <addr>                  # moves money
 moonrush-cli trade sell --percent 50 --address <addr> --networkId base   # moves money
 moonrush-cli orders create --kind sl --change -20 --percent 100 --address <addr>
 moonrush-cli orders list --status closed
+moonrush-cli send usdc --to <address> --amount 50                 # moves money OUT
+moonrush-cli send asset --token native --amount max --to <0x...>  # moves money OUT
 moonrush-cli feed posts --following --kinds comment
 moonrush-cli mooncall read --positionId <uuid>
 moonrush-cli mooncall post --positionId <uuid> --text "..."       # publishes
@@ -201,7 +204,8 @@ filter gets written around, and eats legitimate token copy on the way.
 Addresses are never rewritten.
 
 `rewards claim`, `trade buy`, `trade sell` and `orders create` move money (an order
-later, by itself), and `mooncall post` publishes under the user's name. Each one shows the
+later, by itself), `send usdc` and `send asset` move it OUT and cannot be recalled, and
+`mooncall post` publishes under the user's name. Each one shows the
 exact amounts or text first, asks on a terminal, and refuses without one. `--yes` exists for
 a person typing on their own machine; the skills tell agents never to pass it.
 
@@ -222,9 +226,9 @@ matches its directory.
 Worth knowing before you plan an integration around it. Each of these exists in the API and
 has no command here yet.
 
-- **No money out.** `wallet deposits` shows where to send funds in, and nothing here sends
-  funds anywhere. Withdrawing and sending are `/transfer/*` and `/rh/send` on the API; no
-  command calls them.
+- **Not every transfer.** `send usdc` and `send asset` cover cashing out USDC and moving an
+  EVM asset. `/transfer/sol` and `/transfer/token` also exist on the API, for sending SOL and
+  an SPL token to another Solana address, and no command calls them yet.
 - **No live streams.** The API has six sockets (gateway, chart, intent, trending, verified,
   discovery). A CLI process does not hold one open, so every skill polls instead. For an
   agent that is usually the right trade: asking again is cheap, and a socket it has to

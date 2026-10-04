@@ -38,7 +38,15 @@ export interface Config {
 
 const DEFAULTS = {
   apiBase: "https://social.moonrush.space",
-  gatewayBase: "https://moonrush-ai-api.contact-9ba.workers.dev",
+  /**
+   * The gateway, on its own domain since 2026-10-04.
+   *
+   * It was `moonrush-ai-api.contact-9ba.workers.dev`, which worked and advertised the
+   * account's internal naming to everybody who installed the package. A `workers.dev`
+   * hostname is not a secret, and a default that ships in a tarball is not the place to
+   * discover that: `ai.moonrush.space` answers identically and says nothing extra.
+   */
+  gatewayBase: "https://ai.moonrush.space",
 };
 
 function parseEnv(text: string): Record<string, string> {
