@@ -1,5 +1,7 @@
 # moonrush-skills
 
+![Moonrush skills](https://raw.githubusercontent.com/moonrush-app/moonrush-skills/main/static/moonrush-skills.png)
+
 The Moonrush API as a CLI, plus the skills that let an agent use it.
 
 ## Install

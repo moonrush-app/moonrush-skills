@@ -7,7 +7,7 @@
     {
       "name": "moonrush-cli",
       "source": "./",
-      "description": "15 Moonrush skills: token detail, chart, risk and search, token due diligence, chart patterns, holder analysis, dev and wallet scoring, smart money, guided buying, the social feed and mooncalls, discovery boards and live config, wallet and portfolio, positions, leaderboards, creator rewards, and trading with limit / take-profit / stop-loss orders",
+      "description": "16 Moonrush skills: token detail, chart, risk and search, token due diligence, chart patterns, holder analysis, dev and wallet scoring, smart money, guided buying, bracket entries that set both exits, the social feed and mooncalls, discovery boards and live config, wallet and portfolio, positions, leaderboards, creator rewards, and trading with limit / take-profit / stop-loss orders",
       "version": "0.5.0",
       "author": { "name": "Moonrush" },
       "homepage": "https://moonrush.space",
