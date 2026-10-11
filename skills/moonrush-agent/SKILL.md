@@ -49,6 +49,13 @@ Each row: `closedTrades`, `winRate`, `profitFactor` (gross profit / gross loss),
 - `lucky`: over half the profit is one trade.
 - `thin`: under ten closed trades. The other numbers are noise.
 - `deep_drawdown`: fell more than half from a peak in the window.
+- `bag_holder`: losses still held (open positions down, dead tokens) are over half of what
+  they realized. Takes profits fast and sits on the losers.
+
+The score keeps conservative books: every loss counts whether realized or still held (dead
+tokens written off at cost), and a gain counts only once realized. `netPnlUsd` is realized
+minus `heldLossUsd`. `capitalWinRate` weighs each trade by the money put in, so one large
+position that collapsed costs more than many small wins earn; `winRate` is the plain count.
 
 `kind: "onchain"` is a real Solana wallet Moonrush imported as a profile; `kind: "user"` is a
 Moonrush user. Both trade real money on chain. Say which when you present someone.

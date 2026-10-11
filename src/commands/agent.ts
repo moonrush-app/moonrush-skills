@@ -27,7 +27,7 @@ Your agent:
   telegram link|status|unlink   Get the agent's messages in Telegram
 
 rank:       --window 7d|30d|90d (30d)  --sort score|pnl|winRate|profitFactor|drawdown
-            --min-trades <n> (5)  --exclude bot,lucky,thin,deep_drawdown  --limit <n> (50)
+            --min-trades <n> (5)  --exclude bot,lucky,thin,deep_drawdown,bag_holder  --limit <n> (50)
 traders:    --limit <n>                      1 to 100 (default 50)
 activity:   --trader <@name|id> | --watchlist | --wallet <address> [--networkId <id|name>]
             (default: the pool; --wallet reads any wallet's on-chain buys and sells)
@@ -197,7 +197,7 @@ async function setStatus(action: "pause" | "resume" | "stop", flags: Flags): Pro
   return 0;
 }
 
-const FLAGS = ["bot", "lucky", "thin", "deep_drawdown"];
+const FLAGS = ["bot", "lucky", "thin", "deep_drawdown", "bag_holder"];
 
 function traderArg(flags: Flags): string {
   const t = typeof flags.trader === "string" ? flags.trader.trim() : "";
