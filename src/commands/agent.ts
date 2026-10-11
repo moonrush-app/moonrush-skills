@@ -6,7 +6,8 @@ import { InvalidArgument, checkFlags, parseChoice, parseInteger, parseNetworkId 
 const USAGE = `moonrush-cli agent <sub> [options]
 
 The Moonrush trading agent: it follows a ranked pool of top traders, buys what
-several of them agree on, and manages the exit. Runs on Moonrush's servers.
+several of them agree on (or copies the wallets you watch), and manages the exit.
+Trades Solana, Base, BNB, Robinhood and Arc. Runs on Moonrush's servers.
 
 Building blocks (any key), for the hosted agent or your own:
   rank                  Every trader's record: win rate, profit factor, drawdown, hold
@@ -53,6 +54,12 @@ setup:
   --min-traders <n>          stricter than the shared signal (default 0: use the signal's)
   --slippage <bps>           entries; exits may go wider to get out (default 300)
   --no-follow-exits          ignore EXIT signals, keep only TP/SL/trailing/time
+  --networks <list>          chains it may trade: solana,base,bnb,robinhood,arc (default all)
+  --copy-wallets             also copy the wallets you watch (agent watch add --address):
+                             buy when they buy, sell when one you followed sells. Solana
+                             and EVM, realtime. --no-copy-wallets turns it off.
+  --wallet-min-agree <n>     how many watched wallets must buy the same token (default 1)
+  --wallet-window <minutes>  inside how long (default 60)
 
 setup in live mode shows the consent text and asks on a terminal first; so do
 resume of a live agent, and stop.
@@ -103,7 +110,8 @@ async function setup(flags: Flags): Promise<number> {
     [
       "mode", "budget", "per-trade", "max-positions", "daily-loss", "tp", "sl", "trail",
       "trail-arm", "max-hold", "min-liquidity", "min-mcap", "min-traders", "slippage",
-      "no-follow-exits", "yes",
+      "no-follow-exits", "networks", "copy-wallets", "no-copy-wallets", "wallet-min-agree",
+      "wallet-window", "yes",
     ],
     "agent setup",
   );
@@ -127,6 +135,21 @@ async function setup(flags: Flags): Promise<number> {
   put("minSignalTraders", num(flags, "min-traders", { min: 0, max: 50 }));
   put("maxSlippageBps", num(flags, "slippage", { min: 10, max: 2_000 }));
   if (flags["no-follow-exits"]) config.followExits = false;
+  if (flags["copy-wallets"]) config.copyWallets = true;
+  if (flags["no-copy-wallets"]) config.copyWallets = false;
+  put("walletMinAgree", num(flags, "wallet-min-agree", { min: 1, max: 20 }));
+  put("walletWindowMin", num(flags, "wallet-window", { min: 5, max: 1440 }));
+  const networks =
+    typeof flags.networks === "string"
+      ? flags.networks.split(",").map((n) => n.trim()).filter(Boolean).map((n) => parseNetworkId(n))
+      : undefined;
+  if (networks) {
+    const allowed = [1399811149, 8453, 56, 4663, 5042];
+    const bad = networks.filter((n) => !allowed.includes(n));
+    if (bad.length) {
+      throw new InvalidArgument(`--networks takes solana, base, bnb, robinhood, arc. Not tradable by the agent: ${bad.join(", ")}`);
+    }
+  }
 
   const me = await api<{ data?: AgentRow | null; platform?: Platform } | AgentRow | null>("/agent/me", { envelope: true });
   const platform = platformOf(me);
@@ -147,7 +170,10 @@ async function setup(flags: Flags): Promise<number> {
     throw new InvalidArgument("The server did not send the live-trading consent text; refusing to go live without it.");
   }
   print(
-    await api("/agent/me", { method: "POST", body: { ...(mode ? { mode } : {}), config, ...consent } }),
+    await api("/agent/me", {
+      method: "POST",
+      body: { ...(mode ? { mode } : {}), config: { ...config, ...(networks ? { networks } : {}) }, ...consent },
+    }),
     flags,
   );
   return 0;

@@ -116,7 +116,23 @@ moonrush-cli agent setup --budget 200 --per-trade 5 --sl 20 --daily-loss 30
 moonrush-cli agent status                             # settings, positions, PnL, decisions
 moonrush-cli agent pause | resume | stop
 moonrush-cli agent telegram link                      # a t.me link; the user taps it
+moonrush-cli agent setup --networks solana,base       # which chains it may trade
+moonrush-cli agent setup --copy-wallets               # also copy the wallets the user watches
+moonrush-cli agent setup --copy-wallets --wallet-min-agree 2 --wallet-window 30
 ```
+
+**Chains.** Solana, Base, BNB, Robinhood and Arc. Every buy is funded from the user's Solana USDC (an EVM buy
+bridges it), and every EVM sell delivers USDC back to Solana, so cash is always the Solana
+USDC balance. EVM buys and sells settle asynchronously: `decisions` may say "not yet confirmed
+on chain" for a minute.
+
+**Copying watched wallets** (`--copy-wallets`). Off by default. When on, the agent also buys
+when `--wallet-min-agree` of the wallets the user watches (`agent watch add --address`) buy
+the same token inside `--wallet-window` minutes, and sells when one of the wallets it followed
+in sells. Same risk limits as everything else. This is where EVM signals come from in
+practice: Moonrush users rarely trade on the EVM chains, a watched wallet there does. With
+`--wallet-min-agree 1` it copies each watched wallet on its own, so say that plainly before
+the user turns it on: whoever they watch, the agent follows.
 
 Every minute: exits first (take profit, stop loss, trailing stop, the followed traders
 leaving, max hold), then each new BUY signal is checked against the limits and bought or
@@ -151,7 +167,8 @@ agent off, or live money off; `agent status` → `platform` says which.
 
 ## Notes
 
-- Solana only for now. Signals on other chains are refused with a reason.
+- Trades Solana, Base, BNB, Robinhood and Arc. Soneium is refused with a reason: exits need a
+  price every minute, and nothing prices Soneium tokens yet.
 - One agent per user. `setup` on an existing agent changes it. Switching paper and live is
   refused while it holds positions: `stop` first.
 - Accepts `--raw` for single-line JSON.
