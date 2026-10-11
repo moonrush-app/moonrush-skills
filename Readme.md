@@ -99,6 +99,7 @@ numbers, and ask you at the terminal, and they are told never to pass `--yes`.
 | `moonrush-wallet-score` | Any wallet's on-chain trading record as a score: skilled, lucky, bot or dev |
 | `moonrush-bracket` | Buy and set both exits in one flow: the buy, then take-profit and stop-loss |
 | `moonrush-send` | Money OUT: cash out USDC on Solana or bridged, and send an EVM asset |
+| `moonrush-agent` | The hosted trading agent: a weighted pool of top traders, consensus signals, your agent on paper or live |
 
 ## Workflows
 

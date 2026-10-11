@@ -14,6 +14,7 @@ import { runRewards } from "./commands/rewards.js";
 import { runTrade } from "./commands/trade.js";
 import { runOrders } from "./commands/orders.js";
 import { runFeed, runFollow, runMooncall } from "./commands/social.js";
+import { runAgent } from "./commands/agent.js";
 
 const USAGE = `moonrush-cli <command> [options]
 
@@ -30,6 +31,7 @@ const USAGE = `moonrush-cli <command> [options]
   feed <sub>             Mooncalls, reposts and trades from everyone or who you follow
   mooncall <sub>         Read a position's thread, or post on it (publishes)
   follow <sub>           Follow, unfollow, and list follows
+  agent <sub>            The hosted trading agent: its trader pool, signals, and yours
 
 Run a command with --help for its sub-commands.
 Every command prints JSON on stdout and takes --raw for one line. Errors go to
@@ -79,6 +81,8 @@ async function main(): Promise<number> {
       return runMooncall(sub, flags);
     case "follow":
       return runFollow(sub, flags);
+    case "agent":
+      return runAgent(sub, flags, positionals.slice(1));
     default:
       process.stderr.write(`Unknown command: ${command}\n\n${USAGE}\n`);
       return 1;

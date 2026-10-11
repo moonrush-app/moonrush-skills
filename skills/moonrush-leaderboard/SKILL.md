@@ -54,8 +54,9 @@ Realised and unrealised PnL over the window, in USD, computed from positions rec
 this product. It says nothing about a trader's activity anywhere else, and a large figure
 is a measure of size as much as of skill.
 
-**Never present a leaderboard position as a recommendation to copy anyone.** This CLI has
-no copy-trading, and a ranking is not advice.
+**Never present a leaderboard position as a recommendation to copy anyone.** A ranking is
+not advice. Following top traders automatically is the hosted agent's job, with its own
+stricter pool and risk limits: see the `moonrush-agent` skill, and start it on paper.
 
 ## Notes
 

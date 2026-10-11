@@ -44,6 +44,7 @@ erroring. And `/proxy/tokenDetails` takes its argument as a single `tokenId` str
 | `moonrush-wallet-score` | Whether any wallet, Moonrush user or not, is a good trader |
 | `moonrush-bracket` | Buy and place both exits in one flow: the buy, then take-profit and stop-loss |
 | `moonrush-send` | Money OUT: cash out USDC on Solana or bridged, and send an EVM asset |
+| `moonrush-agent` | Trader ranking (win rate, drawdown, bot/luck flags), "trader X just bought", weighted consensus, and the hosted agent (paper or live) |
 
 ## Quick routing
 
@@ -79,6 +80,16 @@ erroring. And `/proxy/tokenDetails` takes its argument as a single `tokenId` str
 | "who holds this", "top holders", "is supply concentrated" | `token holders --address <addr>` |
 | "who is the dev", "has the dev rugged before" | `token dev --address <addr>` |
 | a wallet address: "is this a good trader", "whose wallet is this" | `wallet stats --address <addr>` |
+| "rank traders by win rate", "who trades well, not bots" | `agent rank --exclude bot,lucky` |
+| "what did @x just buy", "is @x selling" | `agent activity --trader @x` (and `agent watch add --trader @x` to keep it live) |
+| "alert me when this wallet buys or sells", a bare wallet address to follow | `agent watch add --address <addr>` (realtime, Solana or EVM) |
+| "what has wallet <addr> been trading" | `agent activity --wallet <addr>` |
+| "what are good traders all buying right now" | `agent consensus` |
+| "message me on Telegram" | `agent telegram link`, then show the user the link |
+| "who does the agent follow", "what is the agent signalling" | `agent traders` / `agent signals` |
+| "how is my agent doing", "why didn't my agent buy X" | `agent status` (read `decisions`) |
+| "set up an agent", "copy the top traders for me" | the `moonrush-agent` skill: `agent setup` on PAPER, limits chosen by the user |
+| "make my agent trade for real", in the user's own words | `agent setup --mode live`, WITHOUT `--yes` |
 
 ## Prerequisites
 
@@ -116,7 +127,9 @@ tell anybody to sign in again, and do not retry.
 ## The commands that move money
 
 `rewards claim`, `trade buy`, `trade sell` and `orders create` send money, or arm an order
-that will. `mooncall post` publishes under the user's name and goes through the same gate.
+that will. `agent setup --mode live`, `agent resume` on a live agent and `agent stop` hand
+the user's money to the hosted agent or sell what it holds, and sit behind the same gate.
+`mooncall post` publishes under the user's name and goes through the same gate.
 Everything else reads, apart from `follow add|remove` and `orders cancel`, which are
 reversible and move nothing.
 

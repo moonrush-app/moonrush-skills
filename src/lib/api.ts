@@ -34,6 +34,12 @@ interface Options {
   body?: unknown;
   /** For the handful of routes that need no token. */
   anonymous?: boolean;
+  /**
+   * Return the whole `{ ok, data, ... }` body instead of `data` alone, for the few routes
+   * that put something the caller needs BESIDE the data (`/agent/me`'s `platform`,
+   * `/agent/activity`'s `tracked`). Errors are still thrown the same way.
+   */
+  envelope?: boolean;
 }
 
 export async function api<T>(path: string, opts: Options = {}): Promise<T> {
@@ -116,6 +122,7 @@ async function requestWithApiKey<T>(path: string, opts: Options): Promise<T> {
     );
   }
 
+  if (opts.envelope) return envelope as T;
   if (envelope && "responseObject" in envelope) return envelope.responseObject as T;
   if (envelope && "data" in envelope) return envelope.data as T;
   return envelope as T;
