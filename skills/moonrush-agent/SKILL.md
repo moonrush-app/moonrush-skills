@@ -149,6 +149,40 @@ Kill switches, from the user's side: `pause` (no new entries, exits still manage
 (sells everything). The daily loss limit pauses it by itself. Moonrush can also switch every
 agent off, or live money off; `agent status` → `platform` says which.
 
+### Selling or adding by hand
+
+```
+moonrush-cli agent sell --position <id>               # all of it
+moonrush-cli agent sell --position <id> --pct 50      # 25, 50 or 75
+moonrush-cli agent add --position <id> --pct 25       # buy more with 10/25/50/100% of cash
+```
+
+Position ids are in `agent status` → `data.positions`. A partial sell keeps the position open
+with a smaller cost. A live agent asks on the terminal first.
+
+### Templates: renting someone's agent
+
+```
+moonrush-cli agent templates                          # published agents and their results
+moonrush-cli agent template show <slug>               # strategy in words, trades, changes
+moonrush-cli agent template follow <slug> --budget 1000 [--per-trade 10 --daily-loss 200]
+moonrush-cli agent template leave
+```
+
+A rented agent runs the template creator's strategy and copies the creator's watched wallets,
+live: when the creator changes something, it changes on the next minute and the user is told.
+The user sets only the money: budget, per-trade, max positions, daily loss. `agent setup` with
+a strategy flag is refused while following; `template leave` keeps the strategy and the open
+positions as the user's own, and sells nothing. Paper only for now.
+
+Results (`stats.return30d` and friends) count every trade at 10% of the account, so a creator
+whose budget changed compares fairly. They are paper results: say so, and say how many trades
+they rest on (`stats.closedTrades`).
+
+Publishing (`agent publish --slug <s> --name <n>`) needs some days of history and closed
+trades (a refusal says how many are missing), and goes live after Moonrush reviews it. Renters never see the creator's wallet
+addresses, only how many.
+
 ## The rules for an agent driving this
 
 - **Paper first, always.** `agent setup` without `--mode` is paper. Suggest live only after

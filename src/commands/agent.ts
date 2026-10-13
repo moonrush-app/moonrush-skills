@@ -25,6 +25,16 @@ Your agent:
   stop                  Sells everything it holds on its next minute. SELLS.
   watch add|remove|list Watch a Moonrush trader, or ANY Solana / EVM wallet in realtime
   telegram link|status|unlink   Get the agent's messages in Telegram
+  sell --position <id>  Sell all of a position, or --pct 25|50|75. SELLS.
+  add --position <id> --pct <10|25|50|100>   Buy more of it with that % of your cash.
+
+Templates (rent someone's agent, paper for now):
+  templates             Published agents and their results
+  template show <slug>  One: its strategy in words, recent trades, what changed
+  template follow <slug> --budget <usd>   Rent it: its strategy, your money. Paper.
+  template leave        Stop following; keep its strategy and positions as your own
+  publish --slug <s> --name <n> [--description <d>]   Publish your agent (reviewed first)
+  publish update|unlist|relist|retire       Manage what you published
 
 rank:       --window 7d|30d|90d (30d)  --sort score|pnl|winRate|profitFactor|drawdown
             --min-trades <n> (5)  --exclude bot,lucky,thin,deep_drawdown,bag_holder  --limit <n> (50)
@@ -60,6 +70,13 @@ setup:
                              and EVM, realtime. --no-copy-wallets turns it off.
   --wallet-min-agree <n>     how many watched wallets must buy the same token (default 1)
   --wallet-window <minutes>  inside how long (default 60)
+
+templates:  --sort return30d|return7d|renters (return30d)  --limit <n> (20)
+            returns count every trade at 10% of the account, whatever the creator's budget
+template follow: --budget <usd> (required)  --per-trade <pct>  --max-positions <n>  --daily-loss <usd>
+            only money settings: the strategy and the watched wallets are the template's
+publish:    needs a few days of history and closed trades (the server says how many if short);
+            listed after Moonrush reviews it
 
 setup in live mode shows the consent text and asks on a terminal first; so do
 resume of a live agent, and stop.
@@ -252,6 +269,109 @@ async function telegram(action: string | undefined, flags: Flags): Promise<numbe
   throw new InvalidArgument("agent telegram is one of: status, link, unlink");
 }
 
+async function templates(flags: Flags): Promise<number> {
+  checkFlags(flags, ["sort", "limit"], "agent templates");
+  const sort = parseChoice(flags.sort, "sort", ["return30d", "return7d", "renters"] as const, "return30d");
+  const limit = parseInteger(flags.limit, "limit", { min: 1, max: 50, fallback: 20 });
+  print(await api(`/agent/templates?sort=${sort}&limit=${limit}`), flags);
+  return 0;
+}
+
+function slugArg(slug: string | undefined, what: string): string {
+  const s = (slug ?? "").trim().toLowerCase();
+  if (!s) throw new InvalidArgument(`${what} needs a template slug, e.g. moonrush-cli agent ${what} copy-6-wallets`);
+  return s;
+}
+
+async function template(action: string | undefined, slug: string | undefined, flags: Flags): Promise<number> {
+  if (action === "show") {
+    checkFlags(flags, [], "agent template show");
+    print(await api(`/agent/templates/${encodeURIComponent(slugArg(slug, "template show"))}`), flags);
+    return 0;
+  }
+  if (action === "follow") {
+    checkFlags(flags, ["budget", "per-trade", "max-positions", "daily-loss"], "agent template follow");
+    const budgetUsd = num(flags, "budget", { min: 10, max: 100_000 });
+    if (budgetUsd === undefined) throw new InvalidArgument("--budget is required: the paper money the agent starts with");
+    const body: Record<string, unknown> = { slug: slugArg(slug, "template follow"), budgetUsd };
+    const perTrade = pct(flags, "per-trade", 50);
+    const maxPositions = num(flags, "max-positions", { min: 1, max: 20 });
+    const dailyLoss = num(flags, "daily-loss", { min: 1, max: 100_000 });
+    if (perTrade !== undefined) body.maxPositionPct = perTrade;
+    if (maxPositions !== undefined) body.maxOpenPositions = maxPositions;
+    if (dailyLoss !== undefined) body.maxDailyLossUsd = dailyLoss;
+    print(await api("/agent/me/template", { method: "POST", body }), flags);
+    return 0;
+  }
+  if (action === "leave") {
+    checkFlags(flags, [], "agent template leave");
+    print(await api("/agent/me/template", { method: "DELETE" }), flags);
+    return 0;
+  }
+  throw new InvalidArgument("agent template is one of: show <slug>, follow <slug>, leave");
+}
+
+async function publish(action: string | undefined, flags: Flags): Promise<number> {
+  if (action === undefined) {
+    checkFlags(flags, ["slug", "name", "description"], "agent publish");
+    const slug = typeof flags.slug === "string" ? flags.slug.trim().toLowerCase() : "";
+    const name = typeof flags.name === "string" ? flags.name.trim() : "";
+    if (!slug || !name) throw new InvalidArgument("--slug and --name are required");
+    const description = typeof flags.description === "string" ? flags.description : undefined;
+    print(
+      await api("/agent/me/publish", { method: "POST", body: { slug, name, ...(description ? { description } : {}) }, envelope: true }),
+      flags,
+    );
+    return 0;
+  }
+  if (action === "update") {
+    checkFlags(flags, ["name", "description"], "agent publish update");
+    const body: Record<string, string> = {};
+    if (typeof flags.name === "string") body.name = flags.name;
+    if (typeof flags.description === "string") body.description = flags.description;
+    if (Object.keys(body).length === 0) throw new InvalidArgument("Pass --name and/or --description");
+    print(await api("/agent/me/publish", { method: "PATCH", body }), flags);
+    return 0;
+  }
+  if (action === "unlist" || action === "relist" || action === "retire") {
+    checkFlags(flags, ["yes"], `agent publish ${action}`);
+    if (action === "retire") {
+      await confirm(
+        "Retiring closes your template for good. Everyone renting it keeps its current strategy as their own.",
+        flags,
+        "this ends your template",
+      );
+    }
+    print(await api(`/agent/me/publish/${action}`, { method: "POST" }), flags);
+    return 0;
+  }
+  throw new InvalidArgument("agent publish takes --slug/--name, or one of: update, unlist, relist, retire");
+}
+
+/** Sell all or part of a position, or add to it, as the Telegram buttons do. */
+async function trade(side: "sell" | "buy", flags: Flags): Promise<number> {
+  checkFlags(flags, ["position", "pct", "yes"], side === "sell" ? "agent sell" : "agent add");
+  const position = typeof flags.position === "string" ? flags.position.trim() : "";
+  if (!/^[0-9a-f-]{36}$/i.test(position)) {
+    throw new InvalidArgument("--position is required: a position id from `moonrush-cli agent status`");
+  }
+  const allowed = side === "sell" ? [25, 50, 75, 100] : [10, 25, 50, 100];
+  const pctValue =
+    flags.pct === undefined && side === "sell" ? 100 : parseInteger(flags.pct, "pct", { min: 1, max: 100, fallback: 0 });
+  if (!allowed.includes(pctValue)) throw new InvalidArgument(`--pct is one of ${allowed.join(", ")}`);
+  const agent = await current();
+  if (!agent) throw new InvalidArgument("No agent yet.");
+  if (agent.mode === "live") {
+    await confirm(
+      side === "sell" ? `Sell ${pctValue}% of this position from your wallet.` : `Buy more with ${pctValue}% of your wallet's USDC.`,
+      flags,
+      "this moves money",
+    );
+  }
+  print(await api(`/agent/me/positions/${position}/trade`, { method: "POST", body: { side, pct: pctValue }, envelope: true }), flags);
+  return 0;
+}
+
 export async function runAgent(sub: string | undefined, flags: Flags, rest: string[] = []): Promise<number> {
   if (!sub || flags.help) {
     process.stdout.write(USAGE + "\n");
@@ -332,6 +452,16 @@ export async function runAgent(sub: string | undefined, flags: Flags, rest: stri
       return 0;
     case "setup":
       return setup(flags);
+    case "templates":
+      return templates(flags);
+    case "template":
+      return template(rest[0], rest[1], flags);
+    case "publish":
+      return publish(rest[0], flags);
+    case "sell":
+      return trade("sell", flags);
+    case "add":
+      return trade("buy", flags);
     case "pause":
     case "resume":
     case "stop":
