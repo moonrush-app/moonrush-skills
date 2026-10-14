@@ -70,6 +70,9 @@ setup:
                              and EVM, realtime. --no-copy-wallets turns it off.
   --wallet-min-agree <n>     how many watched wallets must buy the same token (default 1)
   --wallet-window <minutes>  inside how long (default 60)
+  --min-wallet-buy <usd>     ignore a watched wallet's buy smaller than this (default 20)
+  --max-chase <pct>          skip a copy when the price is already this % above what the
+                             wallet paid (default 15)
 
 templates:  --sort return30d|return7d|renters (return30d)  --limit <n> (20)
             returns count every trade at 10% of the account, whatever the creator's budget
@@ -128,7 +131,7 @@ async function setup(flags: Flags): Promise<number> {
       "mode", "budget", "per-trade", "max-positions", "daily-loss", "tp", "sl", "trail",
       "trail-arm", "max-hold", "min-liquidity", "min-mcap", "min-traders", "slippage",
       "no-follow-exits", "networks", "copy-wallets", "no-copy-wallets", "wallet-min-agree",
-      "wallet-window", "yes",
+      "wallet-window", "min-wallet-buy", "max-chase", "yes",
     ],
     "agent setup",
   );
@@ -156,6 +159,8 @@ async function setup(flags: Flags): Promise<number> {
   if (flags["no-copy-wallets"]) config.copyWallets = false;
   put("walletMinAgree", num(flags, "wallet-min-agree", { min: 1, max: 20 }));
   put("walletWindowMin", num(flags, "wallet-window", { min: 5, max: 1440 }));
+  put("walletMinBuyUsd", num(flags, "min-wallet-buy", { min: 0, max: 1_000_000 }));
+  put("maxChasePct", pct(flags, "max-chase", 1_000));
   const networks =
     typeof flags.networks === "string"
       ? flags.networks.split(",").map((n) => n.trim()).filter(Boolean).map((n) => parseNetworkId(n))
