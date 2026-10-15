@@ -25,8 +25,10 @@ Your agent:
   stop                  Sells everything it holds on its next minute. SELLS.
   watch add|remove|list Watch a Moonrush trader, or ANY Solana / EVM wallet in realtime
   telegram link|status|unlink   Get the agent's messages in Telegram
-  key                           The API key in use: its scopes, and for an agent key its limits
-                                and what it may still spend today
+  key                           The API key in use: its scopes, and for an agent key its limits,
+                                what it may still spend today, and its own wallet
+  wallet [create]               An agent key's own wallets (Solana + EVM) and their cash; create
+                                makes them. Its trades run from these, never your main wallet
   notify --text <message>       Send yourself a message in that Telegram (60 an hour), for a
                                 runner you built: "bought X", "stopped out of Y"
   sell --position <id>  Sell all of a position, or --pct 25|50|75. SELLS.
@@ -544,6 +546,11 @@ export async function runAgent(sub: string | undefined, flags: Flags, rest: stri
     case "key":
       checkFlags(flags, [], "agent key");
       print(await api("/agent/me/key", { envelope: true }), flags);
+      return 0;
+    case "wallet":
+      checkFlags(flags, [], "agent wallet");
+      if (rest[0] !== undefined && rest[0] !== "create") throw new InvalidArgument("agent wallet [create]");
+      print(await api("/agent/me/key/wallet", { method: rest[0] === "create" ? "POST" : "GET", envelope: true }), flags);
       return 0;
     case "notify": {
       checkFlags(flags, ["text"], "agent notify");
