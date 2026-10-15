@@ -202,6 +202,12 @@ addresses, only how many.
 - **Never choose the limits for the user.** Show the defaults (`agent --help`) and let them
   pick. Percent flags take percentages: `--sl 20` is a 20% stop.
 - **`telegram link` returns a link the USER must open.** Show it; do not open it.
+- **Building your own runner.** With an agent key (console: "Agent: trades on its own"),
+  `trade` and `orders` run without a prompt inside the key's limits; check them with
+  `agent key`. Use `agent activity --wallet` (with `holding` to skip scalpers), `agent token`
+  for a token's figures and your filters, and `agent notify` to tell the owner what you did.
+  Never raise a limit, retry a refused trade in smaller pieces, or move the hosted agent to
+  live: those are the owner's.
 
 ## Reading `agent status`
 

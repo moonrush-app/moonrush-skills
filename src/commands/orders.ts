@@ -1,6 +1,6 @@
 import { api } from "../lib/api.js";
 import { print } from "../lib/args.js";
-import { confirm } from "../lib/confirm.js";
+import { confirmTrade } from "../lib/confirm.js";
 import {
   USDC_DECIMALS,
   decimalToRaw,
@@ -159,7 +159,7 @@ async function create(flags: Flags): Promise<number> {
   }
 
   const now = facts.priceUsd != null ? ` (now $${priceString(facts.priceUsd)})` : "";
-  await confirm(
+  await confirmTrade(
     `${LABEL[kind]} ${side.toUpperCase()} on ${NETWORKS[networkId]}: ${sizeText} when ${facts.symbol} reaches $${triggerPrice}${now}` +
       `${body.trailBps ? `, trailing ${Number(body.trailBps) / 100}%` : ""}` +
       `${body.allowWorseFill ? ", filling past the slippage band if it must" : ""}.\n` +

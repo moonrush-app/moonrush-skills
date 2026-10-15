@@ -1,6 +1,6 @@
 import { api } from "../lib/api.js";
 import { print } from "../lib/args.js";
-import { confirm } from "../lib/confirm.js";
+import { confirmTrade } from "../lib/confirm.js";
 import {
   USDC_DECIMALS,
   decimalToRaw,
@@ -218,7 +218,7 @@ export async function runTrade(sub: string | undefined, flags: Flags): Promise<n
   const q = await quote(p);
   const expected = expectedText(p, q);
 
-  await confirm(
+  await confirmTrade(
     `${p.side === "buy" ? "Buy" : "Sell"} on ${NETWORKS[p.networkId]}: spend ${p.spendText}` +
       `${expected ? `, receive ${expected}` : ""}` +
       `${p.slippageBps ? ` (slippage up to ${p.slippageBps / 100}%)` : ""}.\n` +

@@ -65,3 +65,43 @@ export async function confirm(
     throw new Refused("Cancelled. Nothing was sent.");
   }
 }
+
+/** What `/agent/me/key` says about the key in use. */
+interface KeyInfo {
+  viaKey: boolean;
+  agent?: boolean;
+  limits?: { maxTradeUsd: number; maxDailySpendUsd: number } | null;
+  leftTodayUsd?: number | null;
+}
+
+let keyInfo: Promise<KeyInfo | null> | undefined;
+
+/** The key in use, asked once per run. Null when it cannot be read: then it is not an agent key. */
+export function currentKey(): Promise<KeyInfo | null> {
+  // Imported here, not at the top: this file is loaded by every command, and the client
+  // reads its configuration when it is first loaded.
+  keyInfo ??= import("./api.js").then(({ api }) => api<KeyInfo>("/agent/me/key")).catch(() => null);
+  return keyInfo;
+}
+
+/**
+ * The gate in front of a TRADE: a buy, a sell, an order.
+ *
+ * AN AGENT KEY IS ITS OWN CONFIRMATION. Its owner made it on the console for a runner that
+ * acts alone and set what it may spend; Moonrush checks every buy against those limits on
+ * the server (per trade, per day, chains, risky tokens), so the prompt here would only stop
+ * the runner it was made for. Any other key asks exactly as [confirm] does.
+ *
+ * Only trades come through here. Sending money out, claiming, posting: an agent key cannot
+ * reach those at all, and they keep [confirm].
+ */
+export async function confirmTrade(question: string, flags: Record<string, unknown>): Promise<void> {
+  if (flags.yes === true || flags.yes === "true") return;
+  const key = await currentKey();
+  if (key?.agent) {
+    const left = key.leftTodayUsd != null ? `, $${key.leftTodayUsd.toFixed(2)} left today` : "";
+    process.stderr.write(`${question}\nAgent key: going ahead inside its limits${left}.\n`);
+    return;
+  }
+  return confirm(question, flags);
+}

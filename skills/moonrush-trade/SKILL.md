@@ -83,6 +83,15 @@ unless a person confirms on a terminal. That refusal is the safety gate, and add
 defeats it. Run the command without it and relay what the CLI asks. `--yes` exists for a
 person typing on their own machine.
 
+**Agent keys are the one exception, and it is not yours to create.** A key made on the
+console as "Agent: trades on its own" is a person's decision that a runner may trade without
+asking each time, inside limits they set (per trade, per day, chains, risky tokens) and that
+Moonrush checks on the server. With such a key, `trade buy|sell` and `orders create` go ahead
+without the prompt and print the limits left. `moonrush-cli agent key` says which kind of key
+is in use. A 403 with `AGENT_KEY_LIMIT` is that limit doing its job: report it, do not split
+the trade to get under it, and do not look for another route. An agent key cannot send money
+out, and cannot switch the hosted agent to live.
+
 **Quote when in doubt.** `trade quote` reads and moves nothing. When a user asks "how much
 would I get", that is the whole answer.
 
