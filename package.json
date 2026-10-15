@@ -17,7 +17,7 @@
   "scripts": {
     "build": "tsc && node scripts/cli-reference.mjs",
     "dev": "tsc --watch",
-    "test": "bun test src",
+    "test": "bun test src examples",
     "prepublishOnly": "npm run build && npm test && node scripts/cli-reference.mjs --check"
   },
   "engines": {
