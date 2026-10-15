@@ -27,6 +27,10 @@ Your agent:
   telegram link|status|unlink   Get the agent's messages in Telegram
   sell --position <id>  Sell all of a position, or --pct 25|50|75. SELLS.
   add --position <id> --pct <10|25|50|100>   Buy more of it with that % of your cash.
+  token <address> [--chain <c>]   What buying a token would be: figures, filter warnings
+  buy <address> --usd <n> [--chain <c>]   Buy a token by address (Solana or EVM). BUYS.
+                        Your filters only warn here; the risk check and position limit refuse.
+                        --chain: for an EVM address that is a token on several chains.
 
 Templates (rent someone's agent, paper for now):
   templates             Published agents and their results
@@ -417,6 +421,58 @@ async function trade(side: "sell" | "buy", flags: Flags): Promise<number> {
   return 0;
 }
 
+interface TokenPreview {
+  ok: boolean;
+  message?: string;
+  choices?: { networkId: number; symbol: string | null; liquidityUsd: number | null }[];
+  token?: { networkId: number; address: string; symbol: string | null };
+  warnings?: { key: string; value: number; limit: number }[];
+  blocked?: string | null;
+  mode?: "paper" | "live";
+}
+
+async function previewOf(address: string, flags: Flags): Promise<TokenPreview> {
+  const chain = flags.chain === undefined ? "" : `&networkId=${parseNetworkId(String(flags.chain))}`;
+  const r = await api<unknown>(`/agent/me/token?address=${encodeURIComponent(address)}${chain}`, { envelope: true });
+  return ((r && typeof r === "object" && "data" in r ? (r as { data?: TokenPreview }).data : r) ?? { ok: false }) as TokenPreview;
+}
+
+async function tokenPreview(address: string | undefined, flags: Flags): Promise<number> {
+  checkFlags(flags, ["chain"], "agent token");
+  if (!address) throw new InvalidArgument("agent token <address>: a Solana or EVM token address");
+  print(await previewOf(address, flags), flags);
+  return 0;
+}
+
+async function buyByAddress(address: string | undefined, flags: Flags): Promise<number> {
+  checkFlags(flags, ["usd", "chain", "yes"], "agent buy");
+  if (!address) throw new InvalidArgument("agent buy <address> --usd <n>: a Solana or EVM token address");
+  const usd = num(flags, "usd", { min: 1, max: 1_000_000 });
+  if (usd === undefined) throw new InvalidArgument("--usd is required: how many dollars to buy");
+  const p = await previewOf(address, flags);
+  if (!p.ok) throw new InvalidArgument(p.message ?? "Could not look up that token");
+  if (!p.token) {
+    const list = (p.choices ?? []).map((c) => `${c.networkId} (${c.symbol ?? "?"})`).join(", ");
+    throw new InvalidArgument(`That address is a token on several chains: ${list}. Pick one with --chain.`);
+  }
+  if (p.blocked) throw new InvalidArgument(p.blocked);
+  for (const w of p.warnings ?? []) {
+    process.stderr.write(`warning: outside your auto-trading filters: ${w.key} ${w.value} (limit ${w.limit})\n`);
+  }
+  if (p.mode === "live") {
+    await confirm(`Buy $${usd} of ${p.token.symbol ?? p.token.address} from your wallet.`, flags, "this moves money");
+  }
+  print(
+    await api("/agent/me/positions", {
+      method: "POST",
+      body: { networkId: p.token.networkId, tokenAddress: p.token.address, usd },
+      envelope: true,
+    }),
+    flags,
+  );
+  return 0;
+}
+
 export async function runAgent(sub: string | undefined, flags: Flags, rest: string[] = []): Promise<number> {
   if (!sub || flags.help) {
     process.stdout.write(USAGE + "\n");
@@ -507,6 +563,10 @@ export async function runAgent(sub: string | undefined, flags: Flags, rest: stri
       return trade("sell", flags);
     case "add":
       return trade("buy", flags);
+    case "token":
+      return tokenPreview(rest[0], flags);
+    case "buy":
+      return buyByAddress(rest[0], flags);
     case "pause":
     case "resume":
     case "stop":
