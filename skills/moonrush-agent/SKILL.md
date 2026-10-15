@@ -207,7 +207,8 @@ addresses, only how many.
   `agent key`. Use `agent activity --wallet` (with `holding` to skip scalpers), `agent token`
   for a token's figures and your filters, and `agent notify` to tell the owner what you did.
   Never raise a limit, retry a refused trade in smaller pieces, or move the hosted agent to
-  live: those are the owner's.
+  live: those are the owner's. Build and test on `paper` first (`paper status`, `trade buy
+  --paper`): the key's own play money, real quotes, nothing moved.
 
 ## Reading `agent status`
 

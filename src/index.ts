@@ -13,6 +13,7 @@ import { runLeaderboard } from "./commands/leaderboard.js";
 import { runRewards } from "./commands/rewards.js";
 import { runTrade } from "./commands/trade.js";
 import { runOrders } from "./commands/orders.js";
+import { runPaper } from "./commands/paper.js";
 import { runFeed, runFollow, runMooncall } from "./commands/social.js";
 import { runAgent } from "./commands/agent.js";
 
@@ -28,6 +29,7 @@ const USAGE = `moonrush-cli <command> [options]
   rewards <sub>          Creator earnings, and claiming them
   trade <sub>            Quote, buy and sell. MOVES MONEY.
   orders <sub>           Limit, take-profit, stop-loss and trailing orders
+  paper <sub>            Play money per API key: real quotes, nothing moved, for testing an agent
   feed <sub>             Mooncalls, reposts and trades from everyone or who you follow
   mooncall <sub>         Read a position's thread, or post on it (publishes)
   follow <sub>           Follow, unfollow, and list follows
@@ -75,6 +77,8 @@ async function main(): Promise<number> {
       return runTrade(sub, flags);
     case "orders":
       return runOrders(sub, flags);
+    case "paper":
+      return runPaper(sub, flags);
     case "feed":
       return runFeed(sub, flags);
     case "mooncall":

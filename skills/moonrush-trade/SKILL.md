@@ -92,6 +92,11 @@ is in use. A 403 with `AGENT_KEY_LIMIT` is that limit doing its job: report it, 
 the trade to get under it, and do not look for another route. An agent key cannot send money
 out, and cannot switch the hosted agent to live.
 
+**Paper when building.** `trade buy|sell --paper` (or `moonrush-cli paper buy|sell|status|fills|reset`)
+trades this API key's play-money account: a real quote, $1,000 to start, 200 trades a UTC day,
+nothing signed. It needs no confirmation because nothing moves. Use it for anything that is a
+test, and say plainly that the result is paper.
+
 **Quote when in doubt.** `trade quote` reads and moves nothing. When a user asks "how much
 would I get", that is the whole answer.
 

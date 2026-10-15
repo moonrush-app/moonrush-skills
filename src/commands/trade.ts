@@ -1,5 +1,6 @@
 import { api } from "../lib/api.js";
 import { print } from "../lib/args.js";
+import { paperBuy, paperSell } from "./paper.js";
 import { confirmTrade } from "../lib/confirm.js";
 import {
   USDC_DECIMALS,
@@ -32,6 +33,7 @@ const USAGE = `moonrush-cli trade <sub> [options]
   --percent <p>             sell: share of what you hold, 0 to 100
   --amount <n>              sell: number of tokens
   --all                     sell: everything you hold
+  --paper                   buy/sell: play money in this key's paper account, nothing moved
   --slippage <pct>          tolerance in percent, e.g. 3 (default: the platform's)
 
 buy and sell quote first, show the numbers, and ask on a terminal before sending.
@@ -196,14 +198,21 @@ export async function runTrade(sub: string | undefined, flags: Flags): Promise<n
   const common = ["address", "networkId", "slippage"];
   const ALLOWED: Record<string, readonly string[]> = {
     quote: [...common, "side", "usd", "percent", "amount", "all"],
-    buy: [...common, "usd", "yes"],
-    sell: [...common, "percent", "amount", "all", "yes"],
+    buy: [...common, "usd", "yes", "paper"],
+    sell: [...common, "percent", "amount", "all", "yes", "paper"],
   };
   if (!ALLOWED[sub]) {
     process.stderr.write(`Unknown sub-command: ${sub}\n\n${USAGE}\n`);
     return 1;
   }
   checkFlags(flags, ALLOWED[sub]!, `trade ${sub}`);
+
+  // Play money: the key's paper account, a real quote, nothing moved and nothing to confirm.
+  if (flags.paper && (sub === "buy" || sub === "sell")) {
+    if (flags.amount !== undefined) throw new InvalidArgument("--paper sells by --percent or --all");
+    print(sub === "buy" ? await paperBuy(flags) : await paperSell(flags), flags);
+    return 0;
+  }
 
   if (sub === "quote") {
     const side = flags.side === "sell" ? "sell" : flags.side === "buy" || flags.side === undefined ? "buy" : null;
