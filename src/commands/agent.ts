@@ -73,6 +73,11 @@ setup:
   --min-wallet-buy <usd>     ignore a watched wallet's buy smaller than this (default 20)
   --max-chase <pct>          skip a copy when the price is already this % above what the
                              wallet paid (default 15)
+  --no-mirror-sells          sell everything on a copied wallet's first sale, not its share
+  --no-mirror-adds           do not buy more when a copied wallet buys more
+  --max-adds <n>             adds per position when mirroring (default 2)
+  --pause-after-losses <n>   pause a wallet after its last n copied trades all lost (default 3,
+                             0 = never)
 
 templates:  --sort return30d|return7d|renters (return30d)  --limit <n> (20)
             returns count every trade at 10% of the account, whatever the creator's budget
@@ -131,7 +136,8 @@ async function setup(flags: Flags): Promise<number> {
       "mode", "budget", "per-trade", "max-positions", "daily-loss", "tp", "sl", "trail",
       "trail-arm", "max-hold", "min-liquidity", "min-mcap", "min-traders", "slippage",
       "no-follow-exits", "networks", "copy-wallets", "no-copy-wallets", "wallet-min-agree",
-      "wallet-window", "min-wallet-buy", "max-chase", "yes",
+      "wallet-window", "min-wallet-buy", "max-chase", "no-mirror-sells", "mirror-sells",
+      "no-mirror-adds", "mirror-adds", "max-adds", "pause-after-losses", "yes",
     ],
     "agent setup",
   );
@@ -161,6 +167,12 @@ async function setup(flags: Flags): Promise<number> {
   put("walletWindowMin", num(flags, "wallet-window", { min: 5, max: 1440 }));
   put("walletMinBuyUsd", num(flags, "min-wallet-buy", { min: 0, max: 1_000_000 }));
   put("maxChasePct", pct(flags, "max-chase", 1_000));
+  if (flags["no-mirror-sells"]) config.mirrorSells = false;
+  if (flags["mirror-sells"]) config.mirrorSells = true;
+  if (flags["no-mirror-adds"]) config.mirrorAdds = false;
+  if (flags["mirror-adds"]) config.mirrorAdds = true;
+  put("maxAdds", num(flags, "max-adds", { min: 0, max: 10 }));
+  put("walletPauseAfterLosses", num(flags, "pause-after-losses", { min: 0, max: 50 }));
   const networks =
     typeof flags.networks === "string"
       ? flags.networks.split(",").map((n) => n.trim()).filter(Boolean).map((n) => parseNetworkId(n))
