@@ -83,6 +83,14 @@ setup:
   --tp-sell <pct>            share sold at the take profit, the rest rides (default 50;
                              100 sells everything)
   --breakeven <pct>          once up this much, a return to the entry sells (default 50; 0 off)
+  --min-wallet-hold <min>    skip buys of a wallet whose median hold is under this (default 10;
+                             0 off): a scalper is out before a copy is in
+  --max-snipers <pct>        skip a token when snipers hold over this % of supply (default 20)
+  --max-bundlers <pct>       ... bundlers (default 30)
+  --max-dev <pct>            ... the developer (default 20)
+  --min-holders <n>          skip a token with fewer holders (default 100)
+  --min-age <minutes>        skip a token younger than this (default 30)
+                             token filters apply only when Codex knows the figure
 
 templates:  --sort return30d|return7d|renters (return30d)  --limit <n> (20)
             returns count every trade at 10% of the account, whatever the creator's budget
@@ -143,7 +151,8 @@ async function setup(flags: Flags): Promise<number> {
       "no-follow-exits", "networks", "copy-wallets", "no-copy-wallets", "wallet-min-agree",
       "wallet-window", "min-wallet-buy", "max-chase", "no-mirror-sells", "mirror-sells",
       "no-mirror-adds", "mirror-adds", "max-adds", "pause-after-losses", "sizing", "tp-sell",
-      "breakeven", "yes",
+      "breakeven", "min-wallet-hold", "max-snipers", "max-bundlers", "max-dev", "min-holders",
+      "min-age", "yes",
     ],
     "agent setup",
   );
@@ -184,6 +193,14 @@ async function setup(flags: Flags): Promise<number> {
   put("walletPauseAfterLosses", num(flags, "pause-after-losses", { min: 0, max: 50 }));
   put("takeProfitSellPct", pct(flags, "tp-sell", 100));
   put("breakevenAfterPct", pct(flags, "breakeven", 2_000));
+  put("walletMinHoldMin", num(flags, "min-wallet-hold", { min: 0, max: 10_080 }));
+  // Percent of supply is sent as a percent (20 = 20%), as Codex reports it.
+  put("maxSniperPct", num(flags, "max-snipers", { min: 0, max: 100 }));
+  put("maxBundlerPct", num(flags, "max-bundlers", { min: 0, max: 100 }));
+  put("maxDevPct", num(flags, "max-dev", { min: 0, max: 100 }));
+  const holders = num(flags, "min-holders", { min: 0, max: 1_000_000 });
+  put("minHolders", holders === undefined ? undefined : Math.round(holders));
+  put("minTokenAgeMin", num(flags, "min-age", { min: 0, max: 525_600 }));
   const networks =
     typeof flags.networks === "string"
       ? flags.networks.split(",").map((n) => n.trim()).filter(Boolean).map((n) => parseNetworkId(n))
