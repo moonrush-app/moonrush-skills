@@ -195,6 +195,9 @@ addresses, only how many.
 
 - **Paper first, always.** `agent setup` without `--mode` is paper. Suggest live only after
   the user has read a paper record from `agent status`, and only if they ask.
+- **Live trades run from the agent's own wallet,** never the main one. The owner makes and
+  funds it on moonrush.space/ai (My agent, "Live wallet"); an API key cannot. Until it exists,
+  `setup --mode live` is refused with `AGENT_WALLET_MISSING`: say where to make it, do not retry.
 - **Live needs the user's own consent.** `agent setup --mode live` prints the consent text the
   server will record and asks on the terminal. Run it WITHOUT `--yes`. Never answer it for the
   user, never paraphrase the consent away, never add `--yes`.
