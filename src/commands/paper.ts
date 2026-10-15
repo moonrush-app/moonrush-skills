@@ -16,7 +16,8 @@ UTC day.
 
   --networkId <id|name>   solana (default), base, bnb, robinhood, arc
 
-\`trade buy|sell --paper\` does the same as paper buy|sell.`;
+\`trade buy|sell --paper\` does the same as paper buy|sell. Standing orders on paper:
+\`orders create|list|cancel --paper\` (limit, tp, sl, trailing; checked each minute).`;
 
 type Flags = Record<string, string | true>;
 

@@ -43,6 +43,9 @@ create:
 
 list: --status open|closed|all  --limit <n>
 
+--paper on create, list or cancel: this API key's paper account instead (play money, real
+prices, checked each minute, no confirmation). Paper sells take --percent.
+
 create asks on a terminal before writing the order: once armed it trades by itself.
 --yes skips the question and is for a person to type, never an agent.`;
 
@@ -118,6 +121,25 @@ async function create(flags: Flags): Promise<number> {
   }
   const triggerPrice = priceString(trigger);
 
+  // Play money: the key's paper account. Same kinds and trigger rules, checked each minute;
+  // nothing to confirm because nothing real moves. A sell is a share of what it holds then.
+  if (flags.paper) {
+    if (side === "sell" && flags.percent === undefined) throw new InvalidArgument("A paper sell order takes --percent, not --amount");
+    if (flags.slippage !== undefined || flags["worse-fill"] !== undefined) {
+      throw new InvalidArgument("--slippage and --worse-fill do not apply to paper orders");
+    }
+    const paper: Record<string, unknown> = { kind, side, networkId, tokenAddress: address, triggerPrice: Number(triggerPrice) };
+    if (side === "buy") paper.usd = Number(flags.usd);
+    else paper.sellPct = Number(flags.percent);
+    if (trailing) paper.trailBps = percentToBps(String(flags.trail), "trail");
+    if (flags.expires !== undefined) {
+      const days = parseInteger(flags.expires, "expires", { min: 1, max: 30, fallback: 7 });
+      paper.expiresAt = new Date(Date.now() + days * 86_400_000).toISOString();
+    }
+    print(await api("/paper/orders", { method: "POST", body: paper, envelope: true }), flags);
+    return 0;
+  }
+
   // ── The amount ──
   const body: Record<string, unknown> = { kind, side, networkId, tokenAddress: address, triggerPrice };
   let sizeText: string;
@@ -179,9 +201,9 @@ export async function runOrders(sub: string | undefined, flags: Flags): Promise<
   }
 
   const ALLOWED: Record<string, readonly string[]> = {
-    list: ["status", "limit"],
-    create: ["kind", "side", "address", "networkId", "price", "change", "usd", "percent", "amount", "trail", "slippage", "worse-fill", "expires", "yes"],
-    cancel: ["id"],
+    list: ["status", "limit", "paper"],
+    create: ["kind", "side", "address", "networkId", "price", "change", "usd", "percent", "amount", "trail", "slippage", "worse-fill", "expires", "yes", "paper"],
+    cancel: ["id", "paper"],
   };
   if (!ALLOWED[sub]) {
     process.stderr.write(`Unknown sub-command: ${sub}\n\n${USAGE}\n`);
@@ -193,7 +215,7 @@ export async function runOrders(sub: string | undefined, flags: Flags): Promise<
     case "list": {
       const status = parseChoice(flags.status, "status", ["open", "closed", "all"] as const, "open");
       const limit = parseInteger(flags.limit, "limit", { min: 1, max: 100, fallback: 50 });
-      print(await api(`/orders?status=${status}&limit=${limit}`), flags);
+      print(await api(`${flags.paper ? "/paper/orders" : "/orders"}?status=${status}&limit=${limit}`, flags.paper ? { envelope: true } : {}), flags);
       return 0;
     }
     case "create":
@@ -202,7 +224,7 @@ export async function runOrders(sub: string | undefined, flags: Flags): Promise<
       // No confirmation: withdrawing an order moves nothing, and an order someone wants gone
       // should not wait behind a prompt while the price runs at its trigger.
       const id = requireUuid(flags.id, "id");
-      print(await api(`/orders/${id}`, { method: "DELETE" }), flags);
+      print(await api(`${flags.paper ? "/paper/orders" : "/orders"}/${id}`, { method: "DELETE", ...(flags.paper ? { envelope: true } : {}) }), flags);
       return 0;
     }
   }

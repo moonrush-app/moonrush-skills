@@ -94,7 +94,9 @@ out, and cannot switch the hosted agent to live.
 
 **Paper when building.** `trade buy|sell --paper` (or `moonrush-cli paper buy|sell|status|fills|reset`)
 trades this API key's play-money account: a real quote, $1,000 to start, 200 trades a UTC day,
-nothing signed. It needs no confirmation because nothing moves. Use it for anything that is a
+nothing signed. It needs no confirmation because nothing moves. `orders create|list|cancel
+--paper` puts standing orders on that account (same kinds and trigger rules as real ones,
+checked each minute, sells by `--percent`). Use it for anything that is a
 test, and say plainly that the result is paper.
 
 **Quote when in doubt.** `trade quote` reads and moves nothing. When a user asks "how much
