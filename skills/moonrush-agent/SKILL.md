@@ -99,6 +99,13 @@ liquidity adds and removes are not reported; trades under $1 are recorded, not p
 somebody is watching it live. It has no PnL or win rate: for a scored record, use `agent rank`
 (Moonrush profiles) or `wallet stats --address`.
 
+It also answers `holding`: `medianHoldMin` (the median minutes from a buy to the next sell of
+the same token, over every swap read), `rounds` (how many buy-to-sell rounds that is) and
+`scalper`, true when there are at least 3 rounds and the median is under `--min-hold`
+(default 10, the hosted agent's `walletMinHoldMin`). A scalper is out a minute or two after it
+buys: a copy lands seconds later and leaves seconds later, paying fees twice for little. Check
+it before you copy a wallet.
+
 ## 3. Consensus
 
 ```
@@ -123,6 +130,7 @@ moonrush-cli agent setup --budget 200 --per-trade 5 --sl 20 --daily-loss 30
 moonrush-cli agent status                             # settings, positions, PnL, decisions
 moonrush-cli agent pause | resume | stop
 moonrush-cli agent telegram link                      # a t.me link; the user taps it
+moonrush-cli agent notify --text "Bought BONK for $25"  # a message into that Telegram (60/hour)
 moonrush-cli agent setup --networks solana,base       # which chains it may trade
 moonrush-cli agent setup --copy-wallets               # also copy the wallets the user watches
 moonrush-cli agent setup --copy-wallets --wallet-min-agree 2 --wallet-window 30

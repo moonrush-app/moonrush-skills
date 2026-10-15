@@ -25,6 +25,8 @@ Your agent:
   stop                  Sells everything it holds on its next minute. SELLS.
   watch add|remove|list Watch a Moonrush trader, or ANY Solana / EVM wallet in realtime
   telegram link|status|unlink   Get the agent's messages in Telegram
+  notify --text <message>       Send yourself a message in that Telegram (60 an hour), for a
+                                runner you built: "bought X", "stopped out of Y"
   sell --position <id>  Sell all of a position, or --pct 25|50|75. SELLS.
   add --position <id> --pct <10|25|50|100>   Buy more of it with that % of your cash.
   token <address> [--chain <c>]   What buying a token would be: figures, filter warnings
@@ -44,7 +46,9 @@ rank:       --window 7d|30d|90d (30d)  --sort score|pnl|winRate|profitFactor|dra
             --min-trades <n> (5)  --exclude bot,lucky,thin,deep_drawdown,bag_holder  --limit <n> (50)
 traders:    --limit <n>                      1 to 100 (default 50)
 activity:   --trader <@name|id> | --watchlist | --wallet <address> [--networkId <id|name>]
-            (default: the pool; --wallet reads any wallet's on-chain buys and sells)
+            (default: the pool; --wallet reads any wallet's on-chain buys and sells, with
+            "holding": its median buy-to-sell time and whether that is a scalper's,
+            under --min-hold <minutes>, default 10)
             --hours <n> (24)  --limit <n> (50)
 consensus:  --watchlist  --window <hours> (6)  --min-traders <n> (2)  --min-score <0..1>
 signals:    --kind buy|exit  --limit <n>     (default both, 30)
@@ -495,13 +499,15 @@ export async function runAgent(sub: string | undefined, flags: Flags, rest: stri
       return 0;
     }
     case "activity": {
-      checkFlags(flags, ["trader", "watchlist", "wallet", "networkId", "hours", "limit"], "agent activity");
+      checkFlags(flags, ["trader", "watchlist", "wallet", "networkId", "hours", "limit", "min-hold"], "agent activity");
       if (typeof flags.wallet === "string") {
         // Any wallet, watched or not, straight from the on-chain index.
         const limit = parseInteger(flags.limit, "limit", { min: 1, max: 100, fallback: 30 });
         const net = flags.networkId === undefined ? "" : `&networkId=${parseNetworkId(flags.networkId)}`;
+        const minHold = num(flags, "min-hold", { min: 0, max: 10_080 });
+        const hold = minHold === undefined ? "" : `&minHoldMin=${minHold}`;
         print(
-          await api(`/agent/wallet-activity?address=${encodeURIComponent(flags.wallet.trim())}&limit=${limit}${net}`, { envelope: true }),
+          await api(`/agent/wallet-activity?address=${encodeURIComponent(flags.wallet.trim())}&limit=${limit}${net}${hold}`, { envelope: true }),
           flags,
         );
         return 0;
@@ -533,6 +539,13 @@ export async function runAgent(sub: string | undefined, flags: Flags, rest: stri
       return watch(rest[0], flags);
     case "telegram":
       return telegram(rest[0], flags);
+    case "notify": {
+      checkFlags(flags, ["text"], "agent notify");
+      const text = typeof flags.text === "string" ? flags.text.trim() : "";
+      if (!text) throw new InvalidArgument("agent notify --text <message>");
+      print(await api("/agent/me/notify", { method: "POST", body: { text }, envelope: true }), flags);
+      return 0;
+    }
     case "traders": {
       checkFlags(flags, ["limit"], "agent traders");
       const limit = parseInteger(flags.limit, "limit", { min: 1, max: 100, fallback: 50 });
