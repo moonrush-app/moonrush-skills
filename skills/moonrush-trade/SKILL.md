@@ -88,7 +88,10 @@ console as "Agent: trades on its own" is a person's decision that a runner may t
 asking each time, inside limits they set (per trade, per day, chains, risky tokens) and that
 Moonrush checks on the server. With such a key, `trade buy|sell` and `orders create` go ahead
 without the prompt and print the limits left. `moonrush-cli agent key` says which kind of key
-is in use. A 403 with `AGENT_KEY_LIMIT` is that limit doing its job: report it, do not split
+is in use. An agent key trades from ITS OWN wallets (`moonrush-cli agent wallet`), never the
+owner's main one: with none made yet every trade is refused with `AGENT_WALLET_MISSING`; the
+owner creates and funds it (console, or `agent wallet create`). Its positions, orders and
+balances are that wallet's only. A 403 with `AGENT_KEY_LIMIT` is that limit doing its job: report it, do not split
 the trade to get under it, and do not look for another route. An agent key cannot send money
 out, and cannot switch the hosted agent to live.
 
