@@ -15,10 +15,10 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node scripts/cli-reference.mjs",
     "dev": "tsc --watch",
     "test": "bun test src",
-    "prepublishOnly": "npm run build && npm test"
+    "prepublishOnly": "npm run build && npm test && node scripts/cli-reference.mjs --check"
   },
   "engines": {
     "node": ">=20"

@@ -153,7 +153,7 @@ Chains, by id or name: `1399811149` / `solana` (default), `4663` / `robinhood`,
 `8453` / `base`, `56` / `bnb`, `1868` / `soneium`, `5042` / `arc`.
 
 Every command prints JSON on stdout and takes `--raw` for one line. Full reference:
-[docs/cli-usage.md](./docs/cli-usage.md).
+[docs/cli-reference.md](./docs/cli-reference.md).
 
 ## Auth
 

@@ -196,3 +196,14 @@ npm test          # bun test src
 ```
 
 `prepublishOnly` runs both, so a broken build or a failing test cannot be published.
+
+## Docs move with the CLI
+
+`docs/cli-reference.md` is generated from the CLI's own `--help` by `npm run build`
+(`scripts/cli-reference.mjs`); never edit it by hand, and `prepublishOnly` fails when it is
+stale. moonrush.space/ai/docs builds its CLI reference from that file, and its skills list
+from `skills/*/SKILL.md`.
+
+A new command or flag, or a change to what one does, also needs the matching page in
+`moonrush-web/content/ai-docs` (and a line in its `changelog.md`) in the same piece of work:
+the reference updates itself, the explanations do not.
