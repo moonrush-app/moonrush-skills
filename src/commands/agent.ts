@@ -78,6 +78,11 @@ setup:
   --max-adds <n>             adds per position when mirroring (default 2)
   --pause-after-losses <n>   pause a wallet after its last n copied trades all lost (default 3,
                              0 = never)
+  --sizing conviction|fixed  size a copy by how big the buy is for that wallet (default), or
+                             always the largest entry
+  --tp-sell <pct>            share sold at the take profit, the rest rides (default 50;
+                             100 sells everything)
+  --breakeven <pct>          once up this much, a return to the entry sells (default 50; 0 off)
 
 templates:  --sort return30d|return7d|renters (return30d)  --limit <n> (20)
             returns count every trade at 10% of the account, whatever the creator's budget
@@ -137,13 +142,14 @@ async function setup(flags: Flags): Promise<number> {
       "trail-arm", "max-hold", "min-liquidity", "min-mcap", "min-traders", "slippage",
       "no-follow-exits", "networks", "copy-wallets", "no-copy-wallets", "wallet-min-agree",
       "wallet-window", "min-wallet-buy", "max-chase", "no-mirror-sells", "mirror-sells",
-      "no-mirror-adds", "mirror-adds", "max-adds", "pause-after-losses", "yes",
+      "no-mirror-adds", "mirror-adds", "max-adds", "pause-after-losses", "sizing", "tp-sell",
+      "breakeven", "yes",
     ],
     "agent setup",
   );
   const mode = flags.mode === undefined ? undefined : parseChoice(flags.mode, "mode", ["paper", "live"] as const, "paper");
 
-  const config: Record<string, number | boolean> = {};
+  const config: Record<string, number | boolean | string> = {};
   const put = (key: string, v: number | undefined) => {
     if (v !== undefined) config[key] = v;
   };
@@ -167,12 +173,17 @@ async function setup(flags: Flags): Promise<number> {
   put("walletWindowMin", num(flags, "wallet-window", { min: 5, max: 1440 }));
   put("walletMinBuyUsd", num(flags, "min-wallet-buy", { min: 0, max: 1_000_000 }));
   put("maxChasePct", pct(flags, "max-chase", 1_000));
+  if (flags.sizing !== undefined) {
+    config.walletSizing = parseChoice(flags.sizing, "sizing", ["conviction", "fixed"] as const, "conviction");
+  }
   if (flags["no-mirror-sells"]) config.mirrorSells = false;
   if (flags["mirror-sells"]) config.mirrorSells = true;
   if (flags["no-mirror-adds"]) config.mirrorAdds = false;
   if (flags["mirror-adds"]) config.mirrorAdds = true;
   put("maxAdds", num(flags, "max-adds", { min: 0, max: 10 }));
   put("walletPauseAfterLosses", num(flags, "pause-after-losses", { min: 0, max: 50 }));
+  put("takeProfitSellPct", pct(flags, "tp-sell", 100));
+  put("breakevenAfterPct", pct(flags, "breakeven", 2_000));
   const networks =
     typeof flags.networks === "string"
       ? flags.networks.split(",").map((n) => n.trim()).filter(Boolean).map((n) => parseNetworkId(n))
