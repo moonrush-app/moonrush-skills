@@ -19,9 +19,10 @@ signed by a private half that never leaves this machine.
   # paste the PUBLIC key at https://moonrush.space/ai/keys
   moonrush-cli config --apply-key <key id>.<secret>
 
-Keys have two tiers. \`read\` is public market data and needs only the key id. Anything that
+Keys have three tiers. \`read\` is public market data and needs only the key id. Anything that
 is one person's (wallet, positions, earnings, trading) needs "Trading and private data" on the
-key AND the signing keypair above.`;
+key AND the signing keypair above. Sending money to another address (\`send\`, perps
+withdrawals) needs "Sending money out" as well, off unless you tick it.`;
 
 export async function runConfig(
   flags: Record<string, string | true>,

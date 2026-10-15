@@ -181,6 +181,10 @@ that is one person's, which is your wallet, positions, earnings and claiming the
 timestamp of each request. So a leaked key id alone reads public boards and nothing else,
 and a captured request cannot be replayed or edited.
 
+**Sending money out is a third tier.** USDC and token sends to another address and perps
+withdrawals need "Sending money out" on the key, which is off unless ticked. A trading key
+without it can buy and sell in your own wallet but cannot move funds to anyone else.
+
 The split is not read versus write: `rewards me` and `wallet portfolio` are reads and both
 sit in the higher tier, because what makes a call dangerous is whose data comes back.
 

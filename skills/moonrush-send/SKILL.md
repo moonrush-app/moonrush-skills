@@ -8,7 +8,10 @@ metadata:
 
 **BEFORE ANYTHING ELSE: run `moonrush-cli config --check`.** Exit 1 means no working
 credentials: point the user at an API key from https://moonrush.space/ai/keys and stop. The
-key needs the "Trading and private data" tier.
+key needs the "Trading and private data" tier AND "Sending money out", which is off by
+default and separate on purpose. A 403 naming `transfer` means the key can trade but not
+send: the user makes a new key with "Sending money out" ticked. Do not suggest it for any
+other skill.
 
 ⚠️ **THIS IS THE ONE SKILL WITH NO UNDO.** A buy can be sold and an order can be cancelled.
 A withdrawal is gone the moment it lands, and it lands at whatever address was typed. Treat
