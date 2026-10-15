@@ -29,6 +29,10 @@ Your agent:
                                 what it may still spend today, and its own wallet
   wallet [create]               An agent key's own wallets (Solana + EVM) and their cash; create
                                 makes them. Its trades run from these, never your main wallet
+  wallet withdraw [--usd <n>]   With the agent key: send its USDC back to your main wallet
+                                (all when --usd is left out). Only ever to your main wallet.
+  wallet fund --key <keyId> --usd <n>   With a trading key: move USDC from your main wallet
+                                into that agent key's wallet. An agent key cannot fund itself.
   notify --text <message>       Send yourself a message in that Telegram (60 an hour), for a
                                 runner you built: "bought X", "stopped out of Y"
   sell --position <id>  Sell all of a position, or --pct 25|50|75. SELLS.
@@ -547,11 +551,30 @@ export async function runAgent(sub: string | undefined, flags: Flags, rest: stri
       checkFlags(flags, [], "agent key");
       print(await api("/agent/me/key", { envelope: true }), flags);
       return 0;
-    case "wallet":
+    case "wallet": {
+      const action = rest[0];
+      if (action === "fund" || action === "withdraw") {
+        checkFlags(flags, action === "fund" ? ["key", "usd", "yes"] : ["key", "usd", "yes"], `agent wallet ${action}`);
+        const usd = num(flags, "usd", { min: 1, max: 100_000 });
+        if (action === "fund" && usd === undefined) throw new InvalidArgument("agent wallet fund --key <keyId> --usd <n>");
+        const key = typeof flags.key === "string" ? flags.key.trim() : "";
+        if (action === "fund" && !key) throw new InvalidArgument("agent wallet fund needs --key <keyId>: the agent key to fund");
+        const path = key ? `/agent/keys/${encodeURIComponent(key)}/wallet/${action}` : "/agent/me/key/wallet/withdraw";
+        await confirm(
+          action === "fund"
+            ? `Move $${usd} USDC from your main wallet into agent key ${key}'s wallet. Transfer fees come out of it.`
+            : `Send ${usd === undefined ? "all of the agent wallet's" : `$${usd} of the agent wallet's`} USDC back to your main wallet.`,
+          flags,
+          "this moves money",
+        );
+        print(await api(path, { method: "POST", body: usd === undefined ? {} : { usd }, envelope: true }), flags);
+        return 0;
+      }
       checkFlags(flags, [], "agent wallet");
-      if (rest[0] !== undefined && rest[0] !== "create") throw new InvalidArgument("agent wallet [create]");
-      print(await api("/agent/me/key/wallet", { method: rest[0] === "create" ? "POST" : "GET", envelope: true }), flags);
+      if (action !== undefined && action !== "create") throw new InvalidArgument("agent wallet [create|fund|withdraw]");
+      print(await api("/agent/me/key/wallet", { method: action === "create" ? "POST" : "GET", envelope: true }), flags);
       return 0;
+    }
     case "notify": {
       checkFlags(flags, ["text"], "agent notify");
       const text = typeof flags.text === "string" ? flags.text.trim() : "";
