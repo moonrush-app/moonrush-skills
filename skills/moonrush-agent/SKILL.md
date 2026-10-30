@@ -182,8 +182,14 @@ moonrush-cli agent template leave
 A rented agent runs the template creator's strategy and copies the creator's watched wallets,
 live: when the creator changes something, it changes on the next minute and the user is told.
 The user sets only the money: budget, per-trade, max positions, daily loss. `agent setup` with
-a strategy flag is refused while following; `template leave` keeps the strategy and the open
-positions as the user's own, and sells nothing.
+a strategy flag is refused while following; `template leave` pauses the agent and sells nothing:
+the strategy stays the creator's (it is never copied to the renter), and what the agent holds
+keeps the exits it was bought with.
+
+A template may have a **price** (`priceUsd`, `pricePeriod` once or monthly) on top of the fee,
+paid in USDC from the main wallet to the creator. An API key cannot pay: send the user to
+`https://moonrush.space/ai/agents/<slug>`. A monthly rental renews a day before it ends at no
+more than the user agreed to; `template cancel` stops renewing.
 
 Renting is on paper or live. A creator may charge a **performance fee** (`feeBps`, up to 10%
 of profit): paid only by LIVE renters, in USDC after a winning sale, and only on profit above
@@ -195,8 +201,8 @@ Results (`stats.return30d` and friends) count every trade at 10% of the account,
 whose budget changed compares fairly. They are paper results: say so, and say how many trades
 they rest on (`stats.closedTrades`).
 
-Publishing (`agent publish --slug <s> --name <n> [--fee <pct>]`, fee 0 to 10% of a renter's
-profit) needs some days of history and closed
+Publishing (`agent publish --slug <s> --name <n> [--fee <pct>] [--price <usd> --period once|monthly]`,
+fee 0 to 10% of a renter's profit, the price all the creator's) needs some days of history and closed
 trades (a refusal says how many are missing), and goes live after Moonrush reviews it. Renters never see the creator's wallet
 addresses, only how many.
 
@@ -240,3 +246,23 @@ addresses, only how many.
 - One agent per user. `setup` on an existing agent changes it. Switching paper and live is
   refused while it holds positions: `stop` first.
 - Accepts `--raw` for single-line JSON.
+
+### Flows: an agent drawn as nodes
+
+```
+moonrush-cli agent flow schema                         # every node and its settings
+moonrush-cli agent flow new --name "Copy carefully"    # starts as the agent's current settings
+moonrush-cli agent flow get <id> --out flow.json       # edit the JSON...
+moonrush-cli agent flow test <id> --file flow.json     # ...test it on the last 24h of signals
+moonrush-cli agent flow put <id> --file flow.json      # save (errors: kept as a draft)
+moonrush-cli agent flow activate <id>                  # the agent runs it
+```
+
+A flow is `{ version: 1, nodes, edges }`. One branch per trigger (`trigger.pool`,
+`trigger.wallets`, `trigger.manual`): trigger, then filters, then `action.buy`; the Buy's
+`exits` handle (`sourceHandle: "exits"`) leads into a chain of exits and its `add` handle into
+`action.add`. Every branch needs `exit.stopLoss`. Exits are checked in a fixed priority however
+they are chained. `test` answers, per signal, which node passed or stopped it and why: read it
+before `activate`, and tell the user what the flow would have bought. The money (budget, size
+per trade, daily loss) is never in a flow: it is whoever runs it. On the web the same flow opens
+on a canvas at `https://moonrush.space/ai/flows/<id>/edit`.

@@ -1,3 +1,4 @@
+import { readFileSync, writeFileSync } from "node:fs";
 import { api } from "../lib/api.js";
 import { print } from "../lib/args.js";
 import { confirm } from "../lib/confirm.js";
@@ -47,10 +48,23 @@ Templates (the marketplace: rent someone's agent, on paper or live):
   template show <slug>  One: its strategy in words, recent trades, what changed
   template follow <slug> --budget <usd>   Rent it: its strategy, your money. Paper, or live
                         if your agent is (you agree to the creator's fee first).
-  template leave        Stop following; keep its strategy and positions as your own
+  template leave        Stop renting: your agent pauses, what it holds keeps its exits
   publish --slug <s> --name <n> [--description <d>] [--fee <pct>]   Publish your agent
                         (reviewed first). --fee: your share of a live renter's profit, 0 to 10.
-  publish update [--fee <pct>]|unlist|relist|retire   Manage what you published
+  publish update [--fee <pct>] [--price <usd> --period once|monthly|free]|unlist|relist|retire
+                        Manage what you published. --price: what renting costs on top of
+                        the fee, all of it yours; --period free makes it free again.
+  template cancel       Stop renewing a monthly rental (it runs to the end of the month paid)
+
+Flows (draw your agent as nodes: triggers, filters, buy, exits):
+  flow schema           Every node, its settings and bounds
+  flow list             Your flows, and which one your agent runs
+  flow new --name <n> [--file f.json]   New flow (no file: your agent's settings as a flow)
+  flow get <id> [--out f.json]          A flow: its graph, errors, what it does in words
+  flow put <id> --file f.json [--name n] Save; with errors it is kept as a draft
+  flow test <id> [--file f.json]        The last 24h of signals through it, node by node
+  flow activate <id> | deactivate       Your agent runs it, or its own settings again
+  flow delete <id>
 
 rank:       --window 7d|30d|90d (30d)  --sort score|pnl|winRate|profitFactor|drawdown
             --min-trades <n> (5)  --exclude bot,lucky,thin,deep_drawdown,bag_holder  --limit <n> (50)
@@ -379,6 +393,20 @@ async function template(action: string | undefined, slug: string | undefined, fl
     if (perTrade !== undefined) body.maxPositionPct = perTrade;
     if (maxPositions !== undefined) body.maxOpenPositions = maxPositions;
     if (dailyLoss !== undefined) body.maxDailyLossUsd = dailyLoss;
+    // A priced template is paid from the main wallet, which an API key never touches: the
+    // owner pays on the web, then this command (or the web) rents it.
+    const priced = await api<{ priceUsd?: number | null; pricePeriod?: string | null; slug?: string }>(
+      `/agent/templates/${encodeURIComponent(String(body.slug))}`,
+    );
+    if (priced?.priceUsd && priced.pricePeriod) {
+      const mine = agentOf(await api<unknown>("/agent/me", { envelope: true })) as (AgentRow & { rental?: { active?: boolean }; template?: { slug?: string } }) | null;
+      if (!(mine?.template?.slug === body.slug && mine?.rental?.active)) {
+        throw new InvalidArgument(
+          `This template costs $${priced.pricePeriod === "once" ? `${priced.priceUsd} once` : `${priced.priceUsd} a month`}, paid from your Moonrush wallet. ` +
+            `Pay on the web: https://moonrush.space/ai/agents/${body.slug}`,
+        );
+      }
+    }
     // A live agent starts paying this creator's fee on its next profitable sale: the owner
     // sees the consent, with the fee named, and agrees to it before the server will rent.
     const me = await api<unknown>("/agent/me", { envelope: true });
@@ -403,12 +431,27 @@ async function template(action: string | undefined, slug: string | undefined, fl
     print(await api("/agent/me/template", { method: "POST", body }), flags);
     return 0;
   }
+  if (action === "cancel") {
+    checkFlags(flags, [], "agent template cancel");
+    print(await api("/agent/me/template/cancel", { method: "POST" }), flags);
+    return 0;
+  }
   if (action === "leave") {
     checkFlags(flags, [], "agent template leave");
     print(await api("/agent/me/template", { method: "DELETE" }), flags);
     return 0;
   }
-  throw new InvalidArgument("agent template is one of: show <slug>, follow <slug>, leave");
+  throw new InvalidArgument("agent template is one of: show <slug>, follow <slug>, cancel, leave");
+}
+
+/** --price and --period: what renting costs, or free. Absent: unchanged. */
+function priceFlags(flags: Flags): Record<string, unknown> | undefined {
+  if (flags.price === undefined && flags.period === undefined) return undefined;
+  const period = parseChoice(flags.period, "period", ["once", "monthly", "free"] as const, "monthly");
+  if (period === "free") return { priceUsd: null, pricePeriod: null };
+  const price = num(flags, "price", { min: 1, max: 10_000 });
+  if (price === undefined) throw new InvalidArgument("--price <usd> is required with --period once|monthly");
+  return { priceUsd: price, pricePeriod: period };
 }
 
 /** --fee in percent of a renter's profit (0 to 10), sent as bps. */
@@ -419,7 +462,7 @@ function feeFlag(flags: Flags): number | undefined {
 
 async function publish(action: string | undefined, flags: Flags): Promise<number> {
   if (action === undefined) {
-    checkFlags(flags, ["slug", "name", "description", "fee"], "agent publish");
+    checkFlags(flags, ["slug", "name", "description", "fee", "price", "period"], "agent publish");
     const slug = typeof flags.slug === "string" ? flags.slug.trim().toLowerCase() : "";
     const name = typeof flags.name === "string" ? flags.name.trim() : "";
     if (!slug || !name) throw new InvalidArgument("--slug and --name are required");
@@ -428,7 +471,7 @@ async function publish(action: string | undefined, flags: Flags): Promise<number
     print(
       await api("/agent/me/publish", {
         method: "POST",
-        body: { slug, name, ...(description ? { description } : {}), ...(feeBps !== undefined ? { feeBps } : {}) },
+        body: { slug, name, ...(description ? { description } : {}), ...(feeBps !== undefined ? { feeBps } : {}), ...(priceFlags(flags) ?? {}) },
         envelope: true,
       }),
       flags,
@@ -436,13 +479,15 @@ async function publish(action: string | undefined, flags: Flags): Promise<number
     return 0;
   }
   if (action === "update") {
-    checkFlags(flags, ["name", "description", "fee"], "agent publish update");
+    checkFlags(flags, ["name", "description", "fee", "price", "period"], "agent publish update");
     const body: Record<string, string | number> = {};
     if (typeof flags.name === "string") body.name = flags.name;
     if (typeof flags.description === "string") body.description = flags.description;
     const feeBps = feeFlag(flags);
     if (feeBps !== undefined) body.feeBps = feeBps;
-    if (Object.keys(body).length === 0) throw new InvalidArgument("Pass --name, --description and/or --fee");
+    const price = priceFlags(flags);
+    if (price) Object.assign(body, price);
+    if (Object.keys(body).length === 0) throw new InvalidArgument("Pass --name, --description, --fee and/or --price/--period");
     print(await api("/agent/me/publish", { method: "PATCH", body }), flags);
     return 0;
   }
@@ -459,6 +504,80 @@ async function publish(action: string | undefined, flags: Flags): Promise<number
     return 0;
   }
   throw new InvalidArgument("agent publish takes --slug/--name, or one of: update, unlist, relist, retire");
+}
+
+/** An agent drawn as nodes. The rules are the server's; this reads and writes the JSON. */
+async function flow(action: string | undefined, id: string | undefined, flags: Flags): Promise<number> {
+  const needId = (what: string) => {
+    const v = (id ?? "").trim();
+    if (!/^[0-9a-f-]{36}$/i.test(v)) throw new InvalidArgument(`agent flow ${what} <id>: an id from \`moonrush-cli agent flow list\``);
+    return v;
+  };
+  const graphFrom = (file: unknown) => {
+    if (typeof file !== "string") return undefined;
+    try {
+      return JSON.parse(readFileSync(file, "utf8"));
+    } catch (e) {
+      throw new InvalidArgument(`--file ${file}: ${e instanceof Error ? e.message : "not JSON"}`);
+    }
+  };
+  switch (action) {
+    case "schema":
+      checkFlags(flags, [], "agent flow schema");
+      print(await api("/agent/flow-schema"), flags);
+      return 0;
+    case "list":
+    case undefined:
+      checkFlags(flags, [], "agent flow list");
+      print(await api("/agent/me/flows"), flags);
+      return 0;
+    case "new": {
+      checkFlags(flags, ["name", "file"], "agent flow new");
+      const name = typeof flags.name === "string" ? flags.name.trim() : "";
+      if (!name) throw new InvalidArgument("agent flow new --name <name> [--file flow.json]");
+      const graph = graphFrom(flags.file);
+      print(await api("/agent/me/flows", { method: "POST", body: { name, ...(graph ? { graph } : {}) } }), flags);
+      return 0;
+    }
+    case "get": {
+      checkFlags(flags, ["out"], "agent flow get");
+      const f = await api<{ graph?: unknown }>(`/agent/me/flows/${needId("get")}`);
+      if (typeof flags.out === "string") {
+        writeFileSync(flags.out, JSON.stringify(f?.graph ?? null, null, 2));
+        print({ wrote: flags.out }, flags);
+      } else print(f, flags);
+      return 0;
+    }
+    case "put": {
+      checkFlags(flags, ["file", "name"], "agent flow put");
+      const graph = graphFrom(flags.file);
+      if (!graph) throw new InvalidArgument("agent flow put <id> --file flow.json");
+      const name = typeof flags.name === "string" ? flags.name.trim() : undefined;
+      print(await api(`/agent/me/flows/${needId("put")}`, { method: "PUT", body: { graph, ...(name ? { name } : {}) } }), flags);
+      return 0;
+    }
+    case "test": {
+      checkFlags(flags, ["file"], "agent flow test");
+      const graph = graphFrom(flags.file);
+      print(await api(`/agent/me/flows/${needId("test")}/test`, { method: "POST", body: graph ? { graph } : {} }), flags);
+      return 0;
+    }
+    case "activate":
+      checkFlags(flags, [], "agent flow activate");
+      print(await api(`/agent/me/flows/${needId("activate")}/activate`, { method: "POST" }), flags);
+      return 0;
+    case "deactivate":
+      checkFlags(flags, [], "agent flow deactivate");
+      print(await api("/agent/me/flows/deactivate", { method: "POST" }), flags);
+      return 0;
+    case "delete":
+      checkFlags(flags, ["yes"], "agent flow delete");
+      await confirm("Delete this flow for good.", flags, "this deletes a flow");
+      print(await api(`/agent/me/flows/${needId("delete")}`, { method: "DELETE" }), flags);
+      return 0;
+    default:
+      throw new InvalidArgument("agent flow is one of: schema, list, new, get, put, test, activate, deactivate, delete");
+  }
 }
 
 /** Sell all or part of a position, or add to it, as the Telegram buttons do. */
@@ -627,6 +746,8 @@ export async function runAgent(sub: string | undefined, flags: Flags, rest: stri
       print(await api("/agent/me/key/wallet", { method: action === "create" ? "POST" : "GET", envelope: true }), flags);
       return 0;
     }
+    case "flow":
+      return flow(rest[0], rest[1], flags);
     case "notify": {
       checkFlags(flags, ["text"], "agent notify");
       const text = typeof flags.text === "string" ? flags.text.trim() : "";
