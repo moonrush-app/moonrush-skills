@@ -388,6 +388,9 @@ setup:
   --no-mirror-sells          sell everything on a copied wallet's first sale, not its share
   --no-mirror-adds           do not buy more when a copied wallet buys more
   --max-adds <n>             adds per position when mirroring (default 2)
+  --add-after <minutes>      no add until the position is this old (default 30, 0 = off)
+  --add-below-entry          also add while the price is below the entry (default: only
+                             while up). --no-add-below-entry turns it back off.
   --pause-after-losses <n>   pause a wallet after its last n copied trades all lost (default 3,
                              0 = never)
   --sizing conviction|fixed  size a copy by how big the buy is for that wallet (default), or

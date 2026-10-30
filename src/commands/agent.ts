@@ -92,6 +92,9 @@ setup:
   --no-mirror-sells          sell everything on a copied wallet's first sale, not its share
   --no-mirror-adds           do not buy more when a copied wallet buys more
   --max-adds <n>             adds per position when mirroring (default 2)
+  --add-after <minutes>      no add until the position is this old (default 30, 0 = off)
+  --add-below-entry          also add while the price is below the entry (default: only
+                             while up). --no-add-below-entry turns it back off.
   --pause-after-losses <n>   pause a wallet after its last n copied trades all lost (default 3,
                              0 = never)
   --sizing conviction|fixed  size a copy by how big the buy is for that wallet (default), or
@@ -166,7 +169,8 @@ async function setup(flags: Flags): Promise<number> {
       "trail-arm", "max-hold", "min-liquidity", "min-mcap", "min-traders", "slippage",
       "no-follow-exits", "networks", "copy-wallets", "no-copy-wallets", "wallet-min-agree",
       "wallet-window", "min-wallet-buy", "max-chase", "no-mirror-sells", "mirror-sells",
-      "no-mirror-adds", "mirror-adds", "max-adds", "pause-after-losses", "sizing", "tp-sell",
+      "no-mirror-adds", "mirror-adds", "max-adds", "add-after", "add-below-entry", "no-add-below-entry",
+      "pause-after-losses", "sizing", "tp-sell",
       "breakeven", "min-wallet-hold", "max-snipers", "max-bundlers", "max-dev", "min-holders",
       "min-age", "yes",
     ],
@@ -206,6 +210,9 @@ async function setup(flags: Flags): Promise<number> {
   if (flags["no-mirror-adds"]) config.mirrorAdds = false;
   if (flags["mirror-adds"]) config.mirrorAdds = true;
   put("maxAdds", num(flags, "max-adds", { min: 0, max: 10 }));
+  put("addMinAgeMin", num(flags, "add-after", { min: 0, max: 10_080 }));
+  if (flags["add-below-entry"]) config.addOnlyInProfit = false;
+  if (flags["no-add-below-entry"]) config.addOnlyInProfit = true;
   put("walletPauseAfterLosses", num(flags, "pause-after-losses", { min: 0, max: 50 }));
   put("takeProfitSellPct", pct(flags, "tp-sell", 100));
   put("breakevenAfterPct", pct(flags, "breakeven", 2_000));

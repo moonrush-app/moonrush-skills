@@ -147,7 +147,9 @@ the same token inside `--wallet-window` minutes, and sells when one of the walle
 in sells. Same risk limits as everything else. This is where EVM signals come from in
 practice: Moonrush users rarely trade on the EVM chains, a watched wallet there does. With
 `--wallet-min-agree 1` it copies each watched wallet on its own, so say that plainly before
-the user turns it on: whoever they watch, the agent follows.
+the user turns it on: whoever they watch, the agent follows. A copy's stop is 30%, as a pool
+position's. When the wallet buys more, the agent adds only once the position is 30 minutes old
+(`--add-after`) and while the price is at or above the entry (`--add-below-entry` lifts that).
 
 Every minute: exits first (take profit, stop loss, trailing stop, the followed traders
 leaving, max hold), then each new BUY signal is checked against the limits and bought or
