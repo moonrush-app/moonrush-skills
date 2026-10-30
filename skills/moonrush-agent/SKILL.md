@@ -170,10 +170,10 @@ moonrush-cli agent add --position <id> --pct 25       # buy more with 10/25/50/1
 Position ids are in `agent status` → `data.positions`. A partial sell keeps the position open
 with a smaller cost. A live agent asks on the terminal first.
 
-### Templates: renting someone's agent
+### The marketplace: renting someone's agent
 
 ```
-moonrush-cli agent templates                          # published agents and their results
+moonrush-cli agent templates [--sort newest --mode live --q copy]   # published agents and results
 moonrush-cli agent template show <slug>               # strategy in words, trades, changes
 moonrush-cli agent template follow <slug> --budget 1000 [--per-trade 10 --daily-loss 200]
 moonrush-cli agent template leave
@@ -183,13 +183,20 @@ A rented agent runs the template creator's strategy and copies the creator's wat
 live: when the creator changes something, it changes on the next minute and the user is told.
 The user sets only the money: budget, per-trade, max positions, daily loss. `agent setup` with
 a strategy flag is refused while following; `template leave` keeps the strategy and the open
-positions as the user's own, and sells nothing. Paper only for now.
+positions as the user's own, and sells nothing.
+
+Renting is on paper or live. A creator may charge a **performance fee** (`feeBps`, up to 10%
+of profit): paid only by LIVE renters, in USDC after a winning sale, and only on profit above
+the renter's previous best. Paper renting is free. Before a live rent, tell the user the fee in
+those words. An agent already live gets the consent text from `template follow`, which names
+the fee; never pass `--yes` for the user. A renter pays the rate they rented at, or less.
 
 Results (`stats.return30d` and friends) count every trade at 10% of the account, so a creator
 whose budget changed compares fairly. They are paper results: say so, and say how many trades
 they rest on (`stats.closedTrades`).
 
-Publishing (`agent publish --slug <s> --name <n>`) needs some days of history and closed
+Publishing (`agent publish --slug <s> --name <n> [--fee <pct>]`, fee 0 to 10% of a renter's
+profit) needs some days of history and closed
 trades (a refusal says how many are missing), and goes live after Moonrush reviews it. Renters never see the creator's wallet
 addresses, only how many.
 

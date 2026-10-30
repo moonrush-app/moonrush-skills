@@ -42,13 +42,15 @@ Your agent:
                         Your filters only warn here; the risk check and position limit refuse.
                         --chain: for an EVM address that is a token on several chains.
 
-Templates (rent someone's agent, paper for now):
+Templates (the marketplace: rent someone's agent, on paper or live):
   templates             Published agents and their results
   template show <slug>  One: its strategy in words, recent trades, what changed
-  template follow <slug> --budget <usd>   Rent it: its strategy, your money. Paper.
+  template follow <slug> --budget <usd>   Rent it: its strategy, your money. Paper, or live
+                        if your agent is (you agree to the creator's fee first).
   template leave        Stop following; keep its strategy and positions as your own
-  publish --slug <s> --name <n> [--description <d>]   Publish your agent (reviewed first)
-  publish update|unlist|relist|retire       Manage what you published
+  publish --slug <s> --name <n> [--description <d>] [--fee <pct>]   Publish your agent
+                        (reviewed first). --fee: your share of a live renter's profit, 0 to 10.
+  publish update [--fee <pct>]|unlist|relist|retire   Manage what you published
 
 rank:       --window 7d|30d|90d (30d)  --sort score|pnl|winRate|profitFactor|drawdown
             --min-trades <n> (5)  --exclude bot,lucky,thin,deep_drawdown,bag_holder  --limit <n> (50)
@@ -111,10 +113,15 @@ setup:
   --min-age <minutes>        skip a token younger than this (default 30)
                              token filters apply only when Codex knows the figure
 
-templates:  --sort return30d|return7d|renters (return30d)  --limit <n> (20)
+templates:  --sort return30d|return7d|renters|newest (return30d)  --limit <n> (20)
+            --mode live|paper  --network <id|name>  --q <text>
             returns count every trade at 10% of the account, whatever the creator's budget
 template follow: --budget <usd> (required)  --per-trade <pct>  --max-positions <n>  --daily-loss <usd>
-            only money settings: the strategy and the watched wallets are the template's
+            only money settings: the strategy and the watched wallets are the template's.
+            An agent that trades live shows the consent, naming the creator's fee, and asks
+            on a terminal first (--yes to agree without asking).
+            The fee: a share of LIVE profit only, taken in USDC after a winning sale, and only
+            on profit above the renter's previous best. Paper renting is free.
 publish:    needs a few days of history and closed trades (the server says how many if short);
             listed after Moonrush reviews it
 
@@ -338,10 +345,14 @@ async function telegram(action: string | undefined, flags: Flags): Promise<numbe
 }
 
 async function templates(flags: Flags): Promise<number> {
-  checkFlags(flags, ["sort", "limit"], "agent templates");
-  const sort = parseChoice(flags.sort, "sort", ["return30d", "return7d", "renters"] as const, "return30d");
+  checkFlags(flags, ["sort", "limit", "mode", "network", "q"], "agent templates");
+  const sort = parseChoice(flags.sort, "sort", ["return30d", "return7d", "renters", "newest"] as const, "return30d");
   const limit = parseInteger(flags.limit, "limit", { min: 1, max: 50, fallback: 20 });
-  print(await api(`/agent/templates?sort=${sort}&limit=${limit}`), flags);
+  const qs = new URLSearchParams({ sort, limit: String(limit) });
+  if (flags.mode !== undefined) qs.set("mode", parseChoice(flags.mode, "mode", ["live", "paper"] as const, "live"));
+  if (typeof flags.network === "string") qs.set("network", String(parseNetworkId(flags.network)));
+  if (typeof flags.q === "string" && flags.q.trim()) qs.set("q", flags.q.trim());
+  print(await api(`/agent/templates?${qs.toString()}`), flags);
   return 0;
 }
 
@@ -358,7 +369,7 @@ async function template(action: string | undefined, slug: string | undefined, fl
     return 0;
   }
   if (action === "follow") {
-    checkFlags(flags, ["budget", "per-trade", "max-positions", "daily-loss"], "agent template follow");
+    checkFlags(flags, ["budget", "per-trade", "max-positions", "daily-loss", "yes"], "agent template follow");
     const budgetUsd = num(flags, "budget", { min: 10, max: 100_000 });
     if (budgetUsd === undefined) throw new InvalidArgument("--budget is required: the paper money the agent starts with");
     const body: Record<string, unknown> = { slug: slugArg(slug, "template follow"), budgetUsd };
@@ -368,6 +379,27 @@ async function template(action: string | undefined, slug: string | undefined, fl
     if (perTrade !== undefined) body.maxPositionPct = perTrade;
     if (maxPositions !== undefined) body.maxOpenPositions = maxPositions;
     if (dailyLoss !== undefined) body.maxDailyLossUsd = dailyLoss;
+    // A live agent starts paying this creator's fee on its next profitable sale: the owner
+    // sees the consent, with the fee named, and agrees to it before the server will rent.
+    const me = await api<unknown>("/agent/me", { envelope: true });
+    const mine = agentOf(me);
+    if (mine?.mode === "live") {
+      const platform = platformOf(me);
+      if (!platform?.liveConsent) throw new InvalidArgument("The server did not send the live-trading consent text; refusing to rent live without it.");
+      const t = await api<{ name?: string; feeBps?: number; creator?: { username?: string } }>(`/agent/templates/${encodeURIComponent(String(body.slug))}`);
+      const fee = t?.feeBps ?? 0;
+      await confirm(
+        `Your agent trades live. Renting "${t?.name ?? body.slug}" means ` +
+          (fee > 0
+            ? `paying @${t?.creator?.username ?? "its creator"} ${+(fee / 100).toFixed(2)}% of your live profit, above your previous best.`
+            : "following its strategy; its creator charges no fee.") +
+          `\n\n${platform.liveConsent.text}`,
+        flags,
+        "this rents the template with real money",
+      );
+      body.consent = true;
+      body.consentVersion = platform.liveConsent.version;
+    }
     print(await api("/agent/me/template", { method: "POST", body }), flags);
     return 0;
   }
@@ -379,25 +411,38 @@ async function template(action: string | undefined, slug: string | undefined, fl
   throw new InvalidArgument("agent template is one of: show <slug>, follow <slug>, leave");
 }
 
+/** --fee in percent of a renter's profit (0 to 10), sent as bps. */
+function feeFlag(flags: Flags): number | undefined {
+  const v = num(flags, "fee", { min: 0, max: 10 });
+  return v === undefined ? undefined : Math.round(v * 100);
+}
+
 async function publish(action: string | undefined, flags: Flags): Promise<number> {
   if (action === undefined) {
-    checkFlags(flags, ["slug", "name", "description"], "agent publish");
+    checkFlags(flags, ["slug", "name", "description", "fee"], "agent publish");
     const slug = typeof flags.slug === "string" ? flags.slug.trim().toLowerCase() : "";
     const name = typeof flags.name === "string" ? flags.name.trim() : "";
     if (!slug || !name) throw new InvalidArgument("--slug and --name are required");
     const description = typeof flags.description === "string" ? flags.description : undefined;
+    const feeBps = feeFlag(flags);
     print(
-      await api("/agent/me/publish", { method: "POST", body: { slug, name, ...(description ? { description } : {}) }, envelope: true }),
+      await api("/agent/me/publish", {
+        method: "POST",
+        body: { slug, name, ...(description ? { description } : {}), ...(feeBps !== undefined ? { feeBps } : {}) },
+        envelope: true,
+      }),
       flags,
     );
     return 0;
   }
   if (action === "update") {
-    checkFlags(flags, ["name", "description"], "agent publish update");
-    const body: Record<string, string> = {};
+    checkFlags(flags, ["name", "description", "fee"], "agent publish update");
+    const body: Record<string, string | number> = {};
     if (typeof flags.name === "string") body.name = flags.name;
     if (typeof flags.description === "string") body.description = flags.description;
-    if (Object.keys(body).length === 0) throw new InvalidArgument("Pass --name and/or --description");
+    const feeBps = feeFlag(flags);
+    if (feeBps !== undefined) body.feeBps = feeBps;
+    if (Object.keys(body).length === 0) throw new InvalidArgument("Pass --name, --description and/or --fee");
     print(await api("/agent/me/publish", { method: "PATCH", body }), flags);
     return 0;
   }
