@@ -106,7 +106,8 @@ setup:
   --min-liquidity <usd>      skip thinner pools (default 50000)
   --min-mcap <usd>           skip smaller tokens (default 100000)
   --min-traders <n>          stricter than the shared signal (default 0: use the signal's)
-  --slippage <bps>           entries; exits may go wider to get out (default 300)
+  --slippage <bps|auto>      entries; exits may go wider to get out (default 300; auto: from
+                             the token's risk and liquidity, as the app does)
   --no-follow-exits          ignore EXIT signals, keep only TP/SL/trailing/time
   --networks <list>          chains it may trade: solana,base,bnb,robinhood,arc (default all)
   --copy-wallets             also copy the wallets you watch (agent watch add --address):
@@ -227,7 +228,7 @@ async function setup(flags: Flags): Promise<number> {
   put("minLiquidityUsd", num(flags, "min-liquidity", { min: 0, max: 100_000_000 }));
   put("minMarketCapUsd", num(flags, "min-mcap", { min: 0, max: 100_000_000_000 }));
   put("minSignalTraders", num(flags, "min-traders", { min: 0, max: 50 }));
-  put("maxSlippageBps", num(flags, "slippage", { min: 10, max: 2_000 }));
+  put("maxSlippageBps", flags.slippage === "auto" ? 0 : num(flags, "slippage", { min: 10, max: 2_000 }));
   if (flags["no-follow-exits"]) config.followExits = false;
   if (flags["copy-wallets"]) config.copyWallets = true;
   if (flags["no-copy-wallets"]) config.copyWallets = false;
