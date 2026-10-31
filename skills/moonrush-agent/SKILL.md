@@ -265,9 +265,12 @@ trigger and `action.buy` is a graph of `filter.token`, `logic.if` (Conditions: r
 `{ field, op, value }` on `token.*`, `signal.*` or `data.<node id>.*`; out of
 `sourceHandle: "true"` or `"false"`), `logic.merge` (`mode: any|all`), `logic.code`
 (JavaScript, sandboxed: return true, false or `{ pass, reason, size, ...values }`),
-`data.skill` (Moonrush data: `token.dd`, `token.chart`, `token.holders`, `token.risk`,
-`token.moonrushHolders`) and `action.telegram` (a message; a path ending there alerts instead
-of buying). Only a Merge or the Buy may have several connections into it. The Buy's `exits`
+`data.skill` (Moonrush data: `token.dd`, `token.ta` (RSI, MACD, Bollinger, VWAP, ADX, EMAs),
+`token.chart`, `token.holders`, `token.risk`, `token.moonrushHolders`; `interval` 5m to 4h),
+`logic.regime` (Market regime of the token, SOL, ETH or BTC; out of `"up"`, `"down"`,
+`"range"` or `"volatile"`), `logic.ai` (AI decision: Claude weighs the signal against the
+creator's `instructions` and buys at or above `minConfidence`; 200 questions a day per agent)
+and `action.telegram` (a message; a path ending there alerts instead of buying). Only a Merge or the Buy may have several connections into it. The Buy's `exits`
 handle leads into a chain of exits (several `exit.takeProfit` make a ladder) and its `add`
 handle into `action.add`. Every branch with a Buy needs `exit.stopLoss`. Exits are checked in a
 fixed priority however they are chained. `test` answers, per signal, which node passed or
