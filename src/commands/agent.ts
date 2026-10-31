@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from "node:fs";
-import { api } from "../lib/api.js";
+import { api, setAgentScope } from "../lib/api.js";
 import { print } from "../lib/args.js";
 import { confirm } from "../lib/confirm.js";
 import { InvalidArgument, checkFlags, parseChoice, parseInteger, parseNetworkId } from "../lib/validate.js";
@@ -18,7 +18,15 @@ Building blocks (any key), for the hosted agent or your own:
   consensus             Tokens several traders are buying now, your window and bar
   signals               The hosted agent's consensus signals: BUY, and EXIT
 
-Your agent:
+Your agents (one flow, one agent: each has its own money, positions, wallet and strategy):
+  list                  Every agent of yours: status, mode, equity, PnL, open positions
+  create --name <n> [--file f.json]   A new agent, paused on paper, with its own wallet. Its
+                        strategy starts from the defaults, or from a flow file.
+  rename <id> --name <n>
+  delete <id> --yes     Only with no open positions, no USDC in its wallet, not published
+  --agent <id|name>     On any command below: which agent. Without it, your first one.
+
+One agent:
   status                Settings, open and closed positions, results, last decisions
   setup                 Create it, or change it. Paper by default. LIVE SPENDS MONEY.
   pause                 No new entries. Exits keep being managed.
@@ -58,15 +66,16 @@ Templates (the marketplace: rent someone's agent, on paper or live):
 
 Flows (draw your agent as nodes: triggers, filters, logic, data, Telegram, buy, exits):
   flow schema           Every node, its settings and bounds
-  flow list             Your flows, and which one your agent runs
-  flow new --name <n> [--file f.json]   New flow (no file: your agent's settings as a flow)
+  flow list             Your flows, each one an agent's strategy (agentId)
+  flow new --name <n> [--file f.json]   New flow, and a paused agent for it (or, with --agent
+                        on an agent that has none, that agent's strategy)
   flow get <id> [--out f.json]          A flow: its graph, errors, what it does in words
   flow put <id> --file f.json [--name n] Save; with errors it is kept as a draft
   flow test <id> [--file f.json]        The last 24h of signals through it, node by node
   flow backtest <id> [--days 7|30] [--file f.json]
                                         Past signals through it with a portfolio: trades,
                                         PnL, win rate, drawdown (exits played on candles)
-  flow activate <id> | deactivate       Your agent runs it, or its own settings again
+  flow activate <id> | deactivate       --agent runs it, or its own settings again
   flow delete <id>
 
 rank:       --window 7d|30d|90d (30d)  --sort score|pnl|winRate|profitFactor|drawdown
@@ -667,12 +676,85 @@ async function buyByAddress(address: string | undefined, flags: Flags): Promise<
   return 0;
 }
 
+interface AgentSummary {
+  id: string;
+  name: string;
+  status: string;
+  mode: string;
+  rented: { slug: string; name: string; creator: string } | null;
+  stats: { openPositions: number; realizedPnlUsd: number; unrealizedPnlUsd: number; equityUsd: number | null };
+}
+
+const UUID = /^[0-9a-f-]{36}$/i;
+
+/** `--agent` as given: an id, or a name matched against the caller's agents. */
+async function resolveAgent(given: string): Promise<string> {
+  if (UUID.test(given)) return given;
+  const all = await api<AgentSummary[]>("/agent/me/agents");
+  const hit = all.filter((a) => a.name.toLowerCase() === given.toLowerCase());
+  if (hit.length === 1) return hit[0]!.id;
+  throw new InvalidArgument(
+    hit.length > 1
+      ? `Several agents are named "${given}": pass its id (agent list).`
+      : `No agent named "${given}". Yours: ${all.map((a) => `${a.name} (${a.id})`).join(", ") || "none"}`,
+  );
+}
+
+async function agents(action: string, rest: string[], flags: Flags): Promise<number> {
+  if (action === "list") {
+    checkFlags(flags, [], "agent list");
+    print(await api("/agent/me/agents"), flags);
+    return 0;
+  }
+  if (action === "create") {
+    checkFlags(flags, ["name", "file"], "agent create");
+    const name = typeof flags.name === "string" ? flags.name.trim() : "";
+    if (!name) throw new InvalidArgument("--name is required");
+    let graph: unknown;
+    if (typeof flags.file === "string") {
+      try {
+        // An export from the web editor is { name, graph }; a bare graph works too.
+        const doc = JSON.parse(readFileSync(flags.file, "utf8")) as { graph?: unknown };
+        graph = doc.graph ?? doc;
+      } catch (e) {
+        throw new InvalidArgument(`--file ${flags.file}: ${e instanceof Error ? e.message : "not JSON"}`);
+      }
+    }
+    print(await api("/agent/me/agents", { method: "POST", body: { name, ...(graph ? { graph } : {}) } }), flags);
+    return 0;
+  }
+  const id = rest[0];
+  if (!id) throw new InvalidArgument(`agent ${action} <id|name>`);
+  const agentId = await resolveAgent(id);
+  if (action === "rename") {
+    checkFlags(flags, ["name"], "agent rename");
+    if (typeof flags.name !== "string" || !flags.name.trim()) throw new InvalidArgument("--name is required");
+    print(await api(`/agent/me/agents/${agentId}`, { method: "PATCH", body: { name: flags.name.trim() } }), flags);
+    return 0;
+  }
+  checkFlags(flags, ["yes"], "agent delete");
+  await confirm(`Delete agent ${id}, its strategy and its history? This cannot be undone.`, flags, "this deletes an agent");
+  print(await api(`/agent/me/agents/${agentId}`, { method: "DELETE" }), flags);
+  return 0;
+}
+
 export async function runAgent(sub: string | undefined, flags: Flags, rest: string[] = []): Promise<number> {
   if (!sub || flags.help) {
     process.stdout.write(USAGE + "\n");
     return flags.help ? 0 : 1;
   }
+  // Which agent: taken off the flags here, so no command has to allow it.
+  if (flags.agent !== undefined) {
+    if (typeof flags.agent !== "string") throw new InvalidArgument("--agent <id|name>");
+    setAgentScope(await resolveAgent(flags.agent));
+    delete flags.agent;
+  }
   switch (sub) {
+    case "list":
+    case "create":
+    case "rename":
+    case "delete":
+      return agents(sub, rest, flags);
     case "rank": {
       checkFlags(flags, ["window", "sort", "min-trades", "exclude", "limit"], "agent rank");
       const window = parseChoice(flags.window, "window", ["7d", "30d", "90d"] as const, "30d");

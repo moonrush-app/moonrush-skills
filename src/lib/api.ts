@@ -42,7 +42,20 @@ interface Options {
   envelope?: boolean;
 }
 
+/**
+ * The agent `agent ... --agent <id>` acts on. A user runs many agents since 0.8 (one flow, one
+ * agent), and every `/agent/me/...` route takes `?agent=`; without it the server means the
+ * first agent, which is what 0.7 and earlier always meant.
+ */
+let agentScope: string | null = null;
+export function setAgentScope(id: string | null): void {
+  agentScope = id;
+}
+
 export async function api<T>(path: string, opts: Options = {}): Promise<T> {
+  if (agentScope && path.startsWith("/agent/me") && !path.startsWith("/agent/me/agents")) {
+    path = `${path}${path.includes("?") ? "&" : "?"}agent=${encodeURIComponent(agentScope)}`;
+  }
   return request<T>(path, opts);
 }
 

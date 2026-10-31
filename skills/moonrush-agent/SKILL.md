@@ -1,7 +1,7 @@
 ---
 name: moonrush-agent
 description: Copy-trading building blocks and the hosted Moonrush trading agent. Rank traders by win rate, profit factor, drawdown and hold time with bot and luck flags; watch traders and read "trader X just bought / sold"; find tokens several traders are buying (weighted consensus); and run an agent, on paper or live, with a budget, a daily loss limit and a kill switch, alerting to Telegram. Use when the user asks who trades well, what a trader just did, what good traders agree on, or wants an agent to follow them.
-argument-hint: "<rank|traders|activity|consensus|signals|status|setup|pause|resume|stop|watch|telegram> [options]"
+argument-hint: "<rank|traders|activity|consensus|signals|list|create|status|setup|pause|resume|stop|watch|telegram> [options] [--agent <id|name>]"
 metadata:
   cliHelp: "moonrush-cli agent --help"
 ---
@@ -123,6 +123,26 @@ them. No single pool trader holds more than 15% of the weight.
 as that, with the numbers and the names, and run `moonrush-token-dd` before anyone buys.
 
 ## 4 and 5. The hosted agent
+
+### Many agents (CLI 0.8)
+
+A user runs up to 10 hosted agents. Each is one strategy (one flow) with its own money,
+positions, history and wallet. `agent list` shows them all; every other command acts on one:
+`--agent <id or name>`, or the user's first agent when it is left out. When the user has more
+than one, ask which agent they mean rather than acting on the first.
+
+```
+moonrush-cli agent list                               # every agent: status, mode, equity, PnL
+moonrush-cli agent create --name "Trending momentum"  # paused, on paper, its own wallet
+moonrush-cli agent create --name "Smart money" --file flow.json
+moonrush-cli agent status --agent "Smart money"
+moonrush-cli agent resume --agent 3f2c...e91a
+moonrush-cli agent rename <id> --name "New name"
+moonrush-cli agent delete <id>                        # asks first; refused while it holds anything
+```
+
+Moving USDC between the main wallet and an agent's own wallet is done by the user on the web
+(the agent's Wallet tab), never through an API key.
 
 ```
 moonrush-cli agent setup                              # PAPER, defaults
