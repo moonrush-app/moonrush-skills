@@ -56,13 +56,16 @@ Templates (the marketplace: rent someone's agent, on paper or live):
                         the fee, all of it yours; --period free makes it free again.
   template cancel       Stop renewing a monthly rental (it runs to the end of the month paid)
 
-Flows (draw your agent as nodes: triggers, filters, buy, exits):
+Flows (draw your agent as nodes: triggers, filters, logic, data, Telegram, buy, exits):
   flow schema           Every node, its settings and bounds
   flow list             Your flows, and which one your agent runs
   flow new --name <n> [--file f.json]   New flow (no file: your agent's settings as a flow)
   flow get <id> [--out f.json]          A flow: its graph, errors, what it does in words
   flow put <id> --file f.json [--name n] Save; with errors it is kept as a draft
   flow test <id> [--file f.json]        The last 24h of signals through it, node by node
+  flow backtest <id> [--days 7|30] [--file f.json]
+                                        Past signals through it with a portfolio: trades,
+                                        PnL, win rate, drawdown (exits played on candles)
   flow activate <id> | deactivate       Your agent runs it, or its own settings again
   flow delete <id>
 
@@ -560,6 +563,14 @@ async function flow(action: string | undefined, id: string | undefined, flags: F
       checkFlags(flags, ["file"], "agent flow test");
       const graph = graphFrom(flags.file);
       print(await api(`/agent/me/flows/${needId("test")}/test`, { method: "POST", body: graph ? { graph } : {} }), flags);
+      return 0;
+    }
+    case "backtest": {
+      checkFlags(flags, ["file", "days"], "agent flow backtest");
+      const days = flags.days === undefined ? 7 : Number(flags.days);
+      if (days !== 7 && days !== 30) throw new InvalidArgument("--days is 7 or 30");
+      const graph = graphFrom(flags.file);
+      print(await api(`/agent/me/flows/${needId("backtest")}/backtest`, { method: "POST", body: { days, ...(graph ? { graph } : {}) } }), flags);
       return 0;
     }
     case "activate":

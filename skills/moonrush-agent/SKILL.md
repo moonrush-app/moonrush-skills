@@ -254,15 +254,25 @@ moonrush-cli agent flow schema                         # every node and its sett
 moonrush-cli agent flow new --name "Copy carefully"    # starts as the agent's current settings
 moonrush-cli agent flow get <id> --out flow.json       # edit the JSON...
 moonrush-cli agent flow test <id> --file flow.json     # ...test it on the last 24h of signals
+moonrush-cli agent flow backtest <id> --days 30        # ...and over 30 days, with PnL
 moonrush-cli agent flow put <id> --file flow.json      # save (errors: kept as a draft)
 moonrush-cli agent flow activate <id>                  # the agent runs it
 ```
 
 A flow is `{ version: 1, nodes, edges }`. One branch per trigger (`trigger.pool`,
-`trigger.wallets`, `trigger.manual`): trigger, then filters, then `action.buy`; the Buy's
-`exits` handle (`sourceHandle: "exits"`) leads into a chain of exits and its `add` handle into
-`action.add`. Every branch needs `exit.stopLoss`. Exits are checked in a fixed priority however
-they are chained. `test` answers, per signal, which node passed or stopped it and why: read it
-before `activate`, and tell the user what the flow would have bought. The money (budget, size
+`trigger.wallets`, `trigger.manual`, `trigger.trending`, `trigger.newToken`). Between the
+trigger and `action.buy` is a graph of `filter.token`, `logic.if` (Conditions: rules
+`{ field, op, value }` on `token.*`, `signal.*` or `data.<node id>.*`; out of
+`sourceHandle: "true"` or `"false"`), `logic.merge` (`mode: any|all`), `logic.code`
+(JavaScript, sandboxed: return true, false or `{ pass, reason, size, ...values }`),
+`data.skill` (Moonrush data: `token.dd`, `token.chart`, `token.holders`, `token.risk`,
+`token.moonrushHolders`) and `action.telegram` (a message; a path ending there alerts instead
+of buying). Only a Merge or the Buy may have several connections into it. The Buy's `exits`
+handle leads into a chain of exits (several `exit.takeProfit` make a ladder) and its `add`
+handle into `action.add`. Every branch with a Buy needs `exit.stopLoss`. Exits are checked in a
+fixed priority however they are chained. `test` answers, per signal, which node passed or
+stopped it and why; `backtest` plays 7 or 30 days of signals with a portfolio and reports
+trades, PnL, win rate and drawdown, and says what it cannot see (fees, Moonrush data nodes).
+Read both before `activate`, and tell the user what the flow would have bought and made. The money (budget, size
 per trade, daily loss) is never in a flow: it is whoever runs it. On the web the same flow opens
 on a canvas at `https://moonrush.space/ai/flows/<id>/edit`.
