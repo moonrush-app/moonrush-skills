@@ -131,6 +131,13 @@ setup:
   --tp-sell <pct>            share sold at the take profit, the rest rides (default 50;
                              100 sells everything)
   --breakeven <pct>          once up this much, a return to the entry sells (default 50; 0 off)
+  --breakeven-lock <pct>     breakeven sells this far above the entry, to cover fees (default 0)
+  --trail-after-tp <pct>     after the first take profit the trail gives back this instead
+                             (default 0: the same as --trail)
+  --time-stop <minutes>      not up --time-stop-gain this long after the buy, and no take
+                             profit taken: sell (default 0: off)
+  --time-stop-gain <pct>     the gain the time stop asks for (default 0)
+  --pool-share <pct>         a buy is at most this % of the pool's liquidity (default 0: off)
   --min-wallet-hold <min>    skip buys of a wallet whose median hold is under this (default 10;
                              0 off): a scalper is out before a copy is in
   --max-snipers <pct>        skip a token when snipers hold over this % of supply (default 20)
@@ -205,7 +212,7 @@ async function setup(flags: Flags): Promise<number> {
       "wallet-window", "min-wallet-buy", "max-chase", "no-mirror-sells", "mirror-sells",
       "no-mirror-adds", "mirror-adds", "max-adds", "add-after", "add-below-entry", "no-add-below-entry",
       "pause-after-losses", "sizing", "tp-sell",
-      "breakeven", "min-wallet-hold", "max-snipers", "max-bundlers", "max-dev", "min-holders",
+      "breakeven", "breakeven-lock", "trail-after-tp", "time-stop", "time-stop-gain", "pool-share", "min-wallet-hold", "max-snipers", "max-bundlers", "max-dev", "min-holders",
       "min-age", "yes",
     ],
     "agent setup",
@@ -250,6 +257,11 @@ async function setup(flags: Flags): Promise<number> {
   put("walletPauseAfterLosses", num(flags, "pause-after-losses", { min: 0, max: 50 }));
   put("takeProfitSellPct", pct(flags, "tp-sell", 100));
   put("breakevenAfterPct", pct(flags, "breakeven", 2_000));
+  put("breakevenLockPct", pct(flags, "breakeven-lock", 100));
+  put("trailAfterTpPct", pct(flags, "trail-after-tp", 95));
+  put("timeStopMin", num(flags, "time-stop", { min: 0, max: 10_080 }));
+  put("timeStopGainPct", pct(flags, "time-stop-gain", 500));
+  put("maxPoolSharePct", pct(flags, "pool-share", 20));
   put("walletMinHoldMin", num(flags, "min-wallet-hold", { min: 0, max: 10_080 }));
   // Percent of supply is sent as a percent (20 = 20%), as Codex reports it.
   put("maxSniperPct", num(flags, "max-snipers", { min: 0, max: 100 }));

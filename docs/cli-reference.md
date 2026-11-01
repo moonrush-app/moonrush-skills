@@ -426,6 +426,13 @@ setup:
   --tp-sell <pct>            share sold at the take profit, the rest rides (default 50;
                              100 sells everything)
   --breakeven <pct>          once up this much, a return to the entry sells (default 50; 0 off)
+  --breakeven-lock <pct>     breakeven sells this far above the entry, to cover fees (default 0)
+  --trail-after-tp <pct>     after the first take profit the trail gives back this instead
+                             (default 0: the same as --trail)
+  --time-stop <minutes>      not up --time-stop-gain this long after the buy, and no take
+                             profit taken: sell (default 0: off)
+  --time-stop-gain <pct>     the gain the time stop asks for (default 0)
+  --pool-share <pct>         a buy is at most this % of the pool's liquidity (default 0: off)
   --min-wallet-hold <min>    skip buys of a wallet whose median hold is under this (default 10;
                              0 off): a scalper is out before a copy is in
   --max-snipers <pct>        skip a token when snipers hold over this % of supply (default 20)
