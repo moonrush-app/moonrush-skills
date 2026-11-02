@@ -275,6 +275,7 @@ moonrush-cli agent flow new --name "Copy carefully"    # starts as the agent's c
 moonrush-cli agent flow get <id> --out flow.json       # edit the JSON...
 moonrush-cli agent flow test <id> --file flow.json     # ...test it on the last 24h of signals
 moonrush-cli agent flow backtest <id> --days 30        # ...and over 30 days, with PnL
+moonrush-cli agent flow insights <id> --days 7         # once it runs: what it turned away did after
 moonrush-cli agent flow put <id> --file flow.json      # save (errors: kept as a draft)
 moonrush-cli agent flow activate <id>                  # the agent runs it
 ```
@@ -292,10 +293,17 @@ trigger and `action.buy` is a graph of `filter.token`, `logic.if` (Conditions: r
 creator's `instructions` and buys at or above `minConfidence`; 200 questions a day per agent)
 and `action.telegram` (a message; a path ending there alerts instead of buying). Only a Merge or the Buy may have several connections into it. The Buy's `exits`
 handle leads into a chain of exits (several `exit.takeProfit` make a ladder) and its `add`
-handle into `action.add`. Every branch with a Buy needs `exit.stopLoss`. Exits are checked in a
+handle into `action.add`. Besides price exits there are `exit.atrStop` (a volatility stop:
+`mult` ATRs under the peak, 15 minute candles), `exit.vwapLost` (`pct` under the day's VWAP)
+and `exit.dump` (`liqDropPct` of the pool pulled, or the deployer sold `devSellPct` of its
+bag, since the buy); these three are checked each minute. Every branch with a Buy needs `exit.stopLoss`. Exits are checked in a
 fixed priority however they are chained. `test` answers, per signal, which node passed or
 stopped it and why; `backtest` plays 7 or 30 days of signals with a portfolio and reports
 trades, PnL, win rate and drawdown, and says what it cannot see (fees, Moonrush data nodes).
-Read both before `activate`, and tell the user what the flow would have bought and made. The money (budget, size
+Read both before `activate`, and tell the user what the flow would have bought and made.
+Once its agent has run a day or more, `insights` groups every signal by the node (or check) that
+stopped it, and the ones it bought, with the token's median move 1, 4 and 24 hours after the
+signal, the share that ran 20% and the share that fell 30%. A node whose turned-away tokens did
+better than the bought ones is costing money: say which, and suggest loosening it. The money (budget, size
 per trade, daily loss) is never in a flow: it is whoever runs it. On the web the same flow opens
 on a canvas at `https://moonrush.space/ai/flows/<id>/edit`.

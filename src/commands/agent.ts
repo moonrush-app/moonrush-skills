@@ -75,6 +75,8 @@ Flows (draw your agent as nodes: triggers, filters, logic, data, Telegram, buy, 
   flow backtest <id> [--days 7|30] [--file f.json]
                                         Past signals through it with a portfolio: trades,
                                         PnL, win rate, drawdown (exits played on candles)
+  flow insights <id> [--days 1..30]     Where its agent's signals stopped, node by node, and
+                                        what those tokens did 1, 4 and 24 hours on
   flow activate <id> | deactivate       --agent runs it, or its own settings again
   flow delete <id>
 
@@ -138,6 +140,13 @@ setup:
                              profit taken: sell (default 0: off)
   --time-stop-gain <pct>     the gain the time stop asks for (default 0)
   --pool-share <pct>         a buy is at most this % of the pool's liquidity (default 0: off)
+  --atr-stop <n>             volatility stop: sell n ATRs (15 minute candles) under the peak
+                             since the buy, checked each minute (default 0: off; 3 is usual)
+  --vwap-exit <pct>          sell once price is this far under the day's VWAP (default 0: off)
+  --liq-drop-exit <pct>      sell once the pool's liquidity fell this much since the buy
+                             (default 0: off)
+  --dev-sell-exit <pct>      sell once the deployer sold this much of what it held at the buy
+                             (default 0: off)
   --min-wallet-hold <min>    skip buys of a wallet whose median hold is under this (default 10;
                              0 off): a scalper is out before a copy is in
   --max-snipers <pct>        skip a token when snipers hold over this % of supply (default 20)
@@ -212,7 +221,7 @@ async function setup(flags: Flags): Promise<number> {
       "wallet-window", "min-wallet-buy", "max-chase", "no-mirror-sells", "mirror-sells",
       "no-mirror-adds", "mirror-adds", "max-adds", "add-after", "add-below-entry", "no-add-below-entry",
       "pause-after-losses", "sizing", "tp-sell",
-      "breakeven", "breakeven-lock", "trail-after-tp", "time-stop", "time-stop-gain", "pool-share", "min-wallet-hold", "max-snipers", "max-bundlers", "max-dev", "min-holders",
+      "breakeven", "breakeven-lock", "trail-after-tp", "time-stop", "time-stop-gain", "pool-share", "atr-stop", "vwap-exit", "liq-drop-exit", "dev-sell-exit", "min-wallet-hold", "max-snipers", "max-bundlers", "max-dev", "min-holders",
       "min-age", "yes",
     ],
     "agent setup",
@@ -262,6 +271,10 @@ async function setup(flags: Flags): Promise<number> {
   put("timeStopMin", num(flags, "time-stop", { min: 0, max: 10_080 }));
   put("timeStopGainPct", pct(flags, "time-stop-gain", 500));
   put("maxPoolSharePct", pct(flags, "pool-share", 20));
+  put("atrStopMult", num(flags, "atr-stop", { min: 0, max: 20 }));
+  put("vwapExitPct", pct(flags, "vwap-exit", 90));
+  put("liqDropExitPct", pct(flags, "liq-drop-exit", 95));
+  put("devSellExitPct", pct(flags, "dev-sell-exit", 100));
   put("walletMinHoldMin", num(flags, "min-wallet-hold", { min: 0, max: 10_080 }));
   // Percent of supply is sent as a percent (20 = 20%), as Codex reports it.
   put("maxSniperPct", num(flags, "max-snipers", { min: 0, max: 100 }));
@@ -593,6 +606,13 @@ async function flow(action: string | undefined, id: string | undefined, flags: F
       if (days !== 7 && days !== 30) throw new InvalidArgument("--days is 7 or 30");
       const graph = graphFrom(flags.file);
       print(await api(`/agent/me/flows/${needId("backtest")}/backtest`, { method: "POST", body: { days, ...(graph ? { graph } : {}) } }), flags);
+      return 0;
+    }
+    case "insights": {
+      checkFlags(flags, ["days"], "agent flow insights");
+      const days = flags.days === undefined ? 7 : Number(flags.days);
+      if (!Number.isInteger(days) || days < 1 || days > 30) throw new InvalidArgument("--days is 1 to 30");
+      print(await api(`/agent/me/flows/${needId("insights")}/insights?days=${days}`), flags);
       return 0;
     }
     case "activate":
