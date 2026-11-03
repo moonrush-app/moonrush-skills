@@ -1,0 +1,59 @@
+{
+  "$comment": "Moonrush on BNB Chain (BSC mainnet). The network moonrush-cli and the Moonrush app trade on when --networkId is 56, bnb or bsc. Values match what the Moonrush backend uses in production; src/lib/validate.test.ts fails if the CLI and this file disagree.",
+  "project": {
+    "name": "Moonrush",
+    "website": "https://moonrush.space",
+    "app": "https://app.moonrush.space",
+    "agentConsole": "https://moonrush.space/ai",
+    "repository": "https://github.com/moonrush-app/moonrush-skills",
+    "category": "Social trading, AI trading agents"
+  },
+  "network": {
+    "name": "BNB Smart Chain",
+    "shortName": "bsc",
+    "chainId": 56,
+    "chainIdHex": "0x38",
+    "caip2": "eip155:56",
+    "nativeCurrency": { "name": "BNB", "symbol": "BNB", "decimals": 18 },
+    "rpcUrls": ["https://bsc-dataseed.binance.org", "https://bsc-rpc.publicnode.com"],
+    "blockExplorer": "https://bscscan.com"
+  },
+  "moonrush": {
+    "networkId": 56,
+    "cliAliases": ["bnb", "bsc", "56"],
+    "features": [
+      "discovery boards: Trending, Movers, New and Verified for BNB Chain tokens",
+      "token lookup and risk report for BEP-20 tokens",
+      "market buys and sells of BEP-20 tokens, routed through Relay into the user's own BNB Chain wallet",
+      "limit, take-profit, stop-loss and trailing orders on BNB Chain positions",
+      "USDC cash-out bridged to a BNB Chain address",
+      "AI trading agents that buy and sell BNB Chain tokens"
+    ],
+    "swapRouting": {
+      "provider": "Relay",
+      "url": "https://relay.link",
+      "relayChainId": 56,
+      "note": "Buys swap the user's USDC into the BEP-20 token, delivered to the user's own wallet on BNB Chain; sells swap it back to USDC"
+    },
+    "cashOutStable": {
+      "symbol": "USDC",
+      "address": "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+      "decimals": 18,
+      "note": "Binance-Peg USD Coin has 18 decimals on BNB Chain, not 6 as on other chains"
+    },
+    "knownAssets": {
+      "WBNB": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+      "USDT": "0x55d398326f99059fF775485246999027B3197955",
+      "USDC": "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+      "BTCB": "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c",
+      "ETH": "0x2170Ed0880ac9A755fd29B2688956BD959F933F8",
+      "FDUSD": "0xc5f0f7b66764F6ec8C8Dff7BA683102295E16409"
+    },
+    "examples": [
+      "moonrush-cli market board --networkId bnb",
+      "moonrush-cli token search --q CAKE --networkId bnb",
+      "moonrush-cli trade quote --side buy --usd 25 --address <bep20-address> --networkId bnb",
+      "moonrush-cli send usdc --to <0x-address> --amount 50 --networkId bnb"
+    ]
+  }
+}

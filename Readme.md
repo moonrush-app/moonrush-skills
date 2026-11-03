@@ -9,6 +9,7 @@
 [日本語](./docs/Readme.ja.md)
 
 [![Console](https://img.shields.io/badge/console-moonrush.space%2Fai-7C3AED)](https://moonrush.space/ai)
+[![BNB Chain](https://img.shields.io/badge/BNB_Chain-live_on_BSC_(56)-F0B90B?logo=bnbchain&logoColor=white)](./bnbconfig.json)
 [![npm](https://img.shields.io/npm/v/moonrush-cli?color=5865F2&label=moonrush-cli)](https://www.npmjs.com/package/moonrush-cli)
 [![X](https://img.shields.io/badge/X-@moonrush__space-000000?logo=x&logoColor=white)](https://x.com/moonrush_space)
 [![Discord](https://img.shields.io/badge/Discord-join-5865F2?logo=discord&logoColor=white)](https://discord.gg/vD66uhAG3h)
@@ -33,6 +34,33 @@ take-profit, stop-loss and trailing variants, bracket entries that place both ex
 flow, and the wallet side with balances, portfolio value over time, deposits, activity, and
 cashing out to another address. Every path that spends money quotes first, shows the numbers,
 and asks the person at the terminal.
+
+## Deployed on BNB Chain
+
+Moonrush is live on **BNB Chain (BNB Smart Chain mainnet, chain id `56`)**. The Moonrush
+app, its AI trading agents and this CLI all trade BEP-20 tokens on BSC:
+
+- **Discovery:** Trending, Movers, New and Verified boards for BNB Chain tokens.
+- **Token research:** price, liquidity, holders and a risk report for any BEP-20 address.
+- **Trading:** market buys and sells, plus limit, take-profit, stop-loss and trailing orders.
+  Swaps are routed through [Relay](https://relay.link): a buy takes the user's USDC and
+  delivers the BEP-20 token to the user's own wallet on BNB Chain, and a sell swaps it back
+  to USDC.
+- **Cash-out:** USDC delivered to any BNB Chain address as Binance-Peg USDC
+  (`0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d`, 18 decimals).
+- **AI agents:** agents built on [moonrush.space/ai](https://moonrush.space/ai) buy and sell
+  BNB Chain tokens.
+
+The network configuration (chain id, RPC endpoints, explorer, settlement stablecoin and known
+assets) is in [`bnbconfig.json`](./bnbconfig.json). Pick BNB Chain with `--networkId bnb`,
+`--networkId bsc` or `--networkId 56`:
+
+```bash
+moonrush-cli market board --networkId bnb
+moonrush-cli token search --q CAKE --networkId bnb
+moonrush-cli trade quote --side buy --usd 25 --address <bep20-address> --networkId bnb
+moonrush-cli send usdc --to <0x-address> --amount 50 --networkId bnb   # moves money OUT
+```
 
 ## Install
 

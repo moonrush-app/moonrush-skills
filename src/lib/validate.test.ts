@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
 import {
   InvalidArgument,
+  NETWORKS,
   base58ByteLength,
   isEvmAddress,
   isSolanaAddress,
@@ -144,5 +146,25 @@ describe("numbers and choices", () => {
     const id = "0f8fad5b-d9cb-469f-a165-70867728950e";
     expect(requireUuid(id, "userId")).toBe(id);
     expect(() => requireUuid("me", "userId")).toThrow(InvalidArgument);
+  });
+});
+
+describe("BNB Chain", () => {
+  const cfg = JSON.parse(readFileSync(new URL("../../bnbconfig.json", import.meta.url), "utf8"));
+
+  test("bnbconfig.json and the CLI name the same chain", () => {
+    expect(cfg.network.chainId).toBe(56);
+    expect(cfg.network.chainIdHex).toBe("0x38");
+    expect(cfg.moonrush.networkId).toBe(cfg.network.chainId);
+    expect(NETWORKS[cfg.network.chainId]).toBe("BNB");
+  });
+
+  test("every alias bnbconfig.json documents is one the CLI accepts", () => {
+    for (const alias of cfg.moonrush.cliAliases) expect(parseNetworkId(alias)).toBe(56);
+  });
+
+  test("the documented assets are well-formed EVM addresses", () => {
+    for (const address of Object.values(cfg.moonrush.knownAssets) as string[]) expect(isEvmAddress(address)).toBe(true);
+    expect(isEvmAddress(cfg.moonrush.cashOutStable.address)).toBe(true);
   });
 });

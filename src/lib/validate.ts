@@ -12,7 +12,13 @@
  * send money to it.
  */
 
-/** Every chain the app trades, by the id the API wants. Mirrors FEATURE_NETWORKS. */
+/**
+ * Every chain the app trades, by the id the API wants. Mirrors FEATURE_NETWORKS.
+ *
+ * 56 is BNB Chain (BSC mainnet), where Moonrush trades BEP-20 tokens (swaps routed through
+ * Relay) and cashes out USDC to. Its RPCs, explorer and contract addresses are in bnbconfig.json at
+ * the repo root, and validate.test.ts holds this table and that file to the same chain id.
+ */
 export const NETWORKS: Record<number, string> = {
   1399811149: "Solana",
   4663: "Robinhood",

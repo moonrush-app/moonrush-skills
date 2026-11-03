@@ -12,6 +12,7 @@
     ".claude-plugin",
     ".cursor-plugin",
     "Readme.md",
+    "bnbconfig.json",
     "LICENSE"
   ],
   "scripts": {
