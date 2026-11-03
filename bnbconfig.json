@@ -3,7 +3,9 @@
   "project": {
     "name": "Moonrush",
     "website": "https://moonrush.space",
-    "app": "https://app.moonrush.space",
+    "webApp": "https://app.moonrush.space",
+    "iosApp": "https://apps.apple.com/us/app/moonrush-social-trading/id6755309476",
+    "androidApp": "https://play.google.com/store/apps/details?id=space.moonrush.app",
     "agentConsole": "https://moonrush.space/ai",
     "repository": "https://github.com/moonrush-app/moonrush-skills",
     "category": "Social trading, AI trading agents"
